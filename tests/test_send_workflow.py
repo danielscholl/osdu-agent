@@ -25,11 +25,14 @@ from agent.workflows.send_workflow import (
 @pytest.fixture
 def mock_config():
     """Create a mock AgentConfig."""
+    from pathlib import Path
+
     config = Mock(spec=AgentConfig)
     config.get_repo_full_name.return_value = "test-org/partition"
     config.get_gitlab_project_path.return_value = "osdu/partition"
     config.github_token = "test-github-token"
     config.gitlab_token = "test-gitlab-token"
+    config.repos_root = Path("./repos")
     return config
 
 

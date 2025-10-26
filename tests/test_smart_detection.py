@@ -183,7 +183,8 @@ class TestFormatAutoDetectionMessage:
     def test_empty_service_list(self):
         """Test message formatting with empty service list."""
         result = format_auto_detection_message([])
-        assert result == "No available services found in ./repos/"
+        assert "No available services found in" in result
+        assert result.endswith("/")
 
     def test_single_service(self):
         """Test message formatting with single service (singular)."""
