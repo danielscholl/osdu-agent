@@ -2,29 +2,27 @@
 
 AI-powered GitHub & GitLab management for OSDU services. Chat with your repositories using natural language.
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Overview
 
 OSDU Agent provides a conversational interface for managing **GitHub** and **GitLab** repositories across OSDU services. Manage Issues, Pull/Merge Requests, Workflows/Pipelines, Code Scanning, and more. With Maven MCP integration, gain powerful **dependency management** and **security scanning** capabilities. Perform comprehensive multi-platform repository operations without leaving your terminal.
 
-**50+ Tools Available** (when both platforms configured):
-
 **GitHub:**
-- 🐛 **Issues**: List, read, create, update, comment, search, **assign to Copilot**
-- 🔀 **Pull Requests**: List, read, create, update, merge, comment
-- ⚙️ **Workflows**: List, monitor runs, trigger, cancel, **detect approval required**
-- 🔒 **Code Scanning**: List security alerts, get vulnerability details
+- **Issues**: List, read, create, update, comment, search, assign to Copilot
+- **Pull Requests**: List, read, create, update, merge, comment
+- **Workflows**: List, monitor runs, trigger, cancel, detect approval required
+- **Code Scanning**: List security alerts, get vulnerability details
 
 **GitLab** (optional):
-- 🐛 **Issues**: List, read, create, update, add notes, search
-- 🔀 **Merge Requests**: List, read, create, update, merge, add notes
-- ⚙️ **Pipelines**: List, monitor, trigger, cancel, retry, get jobs
+- **Issues**: List, read, create, update, add notes, search
+- **Merge Requests**: List, read, create, update, merge, add notes
+- **Pipelines**: List, monitor, trigger, cancel, retry, get jobs
 
 **Common:**
-- 📁 **File System**: List files, read contents, search patterns, parse POMs, find dependency versions
-- 📦 **Maven Dependencies** (optional): Version checks, dependency updates, vulnerability scanning, triage analysis
+- **File System**: List files, read contents, search patterns, parse POMs, find dependency versions
+- **Maven Dependencies** (optional): Version checks, dependency updates, vulnerability scanning, triage analysis
 
 ```bash
 You: List all open issues in partition
@@ -90,7 +88,7 @@ Agent: Found 3 reference(s) to org.opengroup.osdu:os-core-lib-azure:
 - [Github Copilot CLI](https://github.com/github/copilot-cli)
 
 **Required**
-- Python 3.11+
+- Python 3.12+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager
 - [GitHub CLI](https://github.com/cli/cli#installation) + `gh auth login`
 
@@ -310,7 +308,7 @@ uv run pytest tests/test_agent.py -v
 
 ## License
 
-MIT License - See LICENSE file for details
+Apache License 2.0 - See LICENSE file for details
 
 ## Acknowledgments
 
