@@ -47,6 +47,13 @@ cp .env.example .env
 # Edit .env with your Azure OpenAI credentials
 ```
 
+To upgrade to the latest version:
+
+```bash
+# Upgrade to latest
+uv tool upgrade osdu-agent
+```
+
 
 ## Usage
 
