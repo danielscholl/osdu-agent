@@ -1,13 +1,13 @@
 # OSDU Agent
 
-Conversational DevOps for OSDU. AI-powered engineering system management.
+Conversational DevOps for OSDU. AN AI-powered engineering system management agent.
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Overview
 
-AI agent for managing Azure SPI Layers and OSDU Community repositories. Use natural language to manage issues, pull requests, workflows, code scanning, and Maven dependencies.
+Manage Azure SPI Layers and OSDU Community repositories and interact with them using natural language to manage issues, pull requests, workflows, code scanning, and dependencies.
 
 ```bash
 # Start interactive chat
@@ -24,7 +24,7 @@ You: Create an issue in partition to update dependencies
 Agent: Created issue #15: Update os-core-lib-azure to 2.2.6...
 ```
 
-Supports issues, PRs, workflows, code scanning. Includes Maven dependency analysis and security vulnerability scanning.
+Supports issues, PRs, workflows, code scanning. Includes dependency analysis and security vulnerability scanning.
 
 ## Prerequisites
 
@@ -34,7 +34,7 @@ Supports issues, PRs, workflows, code scanning. Includes Maven dependency analys
 - [GitHub Copilot CLI](https://github.com/github/copilot-cli) for workflow automation
 - [Azure OpenAI](https://learn.microsoft.com/en-us/azure/ai-foundry/quickstarts/get-started-code) endpoint and API key
 
-Optional: [Trivy](https://trivy.dev) for vulnerability scanning, GitLab token for GitLab integration
+Optional: [Trivy](https://trivy.dev) for vulnerability scanning.
 
 ## Install
 
