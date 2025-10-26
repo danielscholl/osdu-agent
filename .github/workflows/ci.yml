@@ -83,7 +83,7 @@ jobs:
 
     # Save test artifacts on failure
     - name: Upload test artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       if: failure() && steps.pytest.outcome == 'failure'
       with:
         name: test-artifacts-py${{ matrix.python-version }}
