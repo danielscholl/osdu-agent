@@ -7,7 +7,7 @@ name = "osdu-agent"
 version = "0.1.0"
 description = "AI-powered GitHub & GitLab management agent for OSDU services"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "Daniel Scholl", email = "danielscholl@users.noreply.github.com"}
@@ -18,7 +18,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 
@@ -75,20 +74,21 @@ omit = [
 
 [tool.black]
 line-length = 100
-target-version = ['py311']
+target-version = ['py312']
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 
-# Exclude external and test directories from type checking
+# Exclude external, test, and copilot directories from type checking
 exclude = [
     "^repos/",
     "^tests/",
+    "^src/agent/copilot/",
 ]

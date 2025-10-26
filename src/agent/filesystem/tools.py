@@ -3,7 +3,7 @@
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
 from pydantic import Field
 
@@ -179,7 +179,7 @@ class FileSystemTools:
             files = [f for f in files if f.is_file()]
 
             # Search in files
-            matches = []
+            matches: List[Dict[str, Any]] = []
             for file_path in files:
                 try:
                     with open(file_path, "r", encoding="utf-8") as f:
@@ -229,8 +229,10 @@ class FileSystemTools:
 
                 if context_lines > 0:
                     output_lines.append("  Context:\n")
-                    for i, ctx_line in enumerate(match["context"]):
-                        ctx_line_num = match["context_start"] + i
+                    context_list: List[str] = match["context"]  # type: ignore[assignment]
+                    context_start_line: int = match["context_start"]  # type: ignore[assignment]
+                    for i, ctx_line in enumerate(context_list):
+                        ctx_line_num = context_start_line + i
                         marker = ">>>" if ctx_line_num == match["line_num"] else "   "
                         output_lines.append(f"  {marker} {ctx_line_num:4d}: {ctx_line}\n")
                     output_lines.append("\n")
@@ -275,7 +277,7 @@ class FileSystemTools:
                     properties[prop_name] = prop.text
 
             # Extract dependencies
-            dependencies = []
+            dependencies: List[Dict[str, Any]] = []
             deps_elem = root.find("mvn:dependencies", ns)
             if deps_elem is not None:
                 for dep in deps_elem.findall("mvn:dependency", ns):
@@ -305,7 +307,7 @@ class FileSystemTools:
                         )
 
             # Extract dependency management
-            managed_deps = []
+            managed_deps: List[Dict[str, Any]] = []
             dep_mgmt = root.find("mvn:dependencyManagement", ns)
             if dep_mgmt is not None:
                 deps_elem = dep_mgmt.find("mvn:dependencies", ns)
@@ -345,26 +347,28 @@ class FileSystemTools:
 
             if dependencies:
                 output_lines.append(f"Dependencies ({len(dependencies)}):\n")
-                for dep in dependencies:
-                    version_str = dep["version"]
-                    if dep["version"] != dep["resolved_version"]:
-                        version_str = f"{dep['version']} → {dep['resolved_version']}"
+                dep_item: Dict[str, Any]
+                for dep_item in dependencies:
+                    version_str = dep_item["version"]
+                    if dep_item["version"] != dep_item["resolved_version"]:
+                        version_str = f"{dep_item['version']} → {dep_item['resolved_version']}"
 
                     output_lines.append(
-                        f"  {dep['groupId']}:{dep['artifactId']}:{version_str} "
-                        f"(scope: {dep['scope']})\n"
+                        f"  {dep_item['groupId']}:{dep_item['artifactId']}:{version_str} "
+                        f"(scope: {dep_item['scope']})\n"
                     )
             else:
                 output_lines.append("No direct dependencies found.\n")
 
             if managed_deps:
                 output_lines.append(f"\nDependency Management ({len(managed_deps)}):\n")
-                for dep in managed_deps:
-                    version_str = dep["version"]
-                    if dep["version"] != dep["resolved_version"]:
-                        version_str = f"{dep['version']} → {dep['resolved_version']}"
+                managed_dep_item: Dict[str, Any]
+                for managed_dep_item in managed_deps:
+                    version_str = managed_dep_item["version"]
+                    if managed_dep_item["version"] != managed_dep_item["resolved_version"]:
+                        version_str = f"{managed_dep_item['version']} → {managed_dep_item['resolved_version']}"
 
-                    output_lines.append(f"  {dep['groupId']}:{dep['artifactId']}:{version_str}\n")
+                    output_lines.append(f"  {managed_dep_item['groupId']}:{managed_dep_item['artifactId']}:{version_str}\n")
 
             return "".join(output_lines)
 
@@ -546,9 +550,10 @@ class FileSystemTools:
             ]
 
             # Group by service (top-level directory under repos)
-            by_service = {}
+            by_service: Dict[str, List[Dict[str, Any]]] = {}
             for result in results:
-                parts = Path(result["file"]).parts
+                file_path_str: str = result.get("file", "")  # type: ignore[assignment]
+                parts = Path(file_path_str).parts if file_path_str else ()
 
                 # Find "repos" in the path and get the next directory
                 service = "unknown"

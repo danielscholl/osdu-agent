@@ -29,7 +29,7 @@ class BaseTracker(ABC):
         """
         pass
 
-    def update(self, service: str, status: str, details: str = "", **kwargs) -> None:
+    def update(self, service: str, status: str, details: str = "", **kwargs: Any) -> None:
         """Update service status.
 
         Args:
@@ -42,7 +42,7 @@ class BaseTracker(ABC):
             self._update_service(service, status, details, **kwargs)
 
     @abstractmethod
-    def _update_service(self, service: str, status: str, details: str, **kwargs) -> None:
+    def _update_service(self, service: str, status: str, details: str, **kwargs: Any) -> None:
         """Internal method to update service status.
 
         Args:

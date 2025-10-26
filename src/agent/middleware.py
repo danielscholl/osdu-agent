@@ -57,7 +57,9 @@ async def logging_function_middleware(
 
     # Emit tool start event (if in interactive mode)
     arguments = context.arguments if hasattr(context, "arguments") else None
-    activity_tracker.emit_tool_start(tool_name, arguments)
+    # Convert BaseModel to dict if needed
+    arguments_dict = arguments.dict() if hasattr(arguments, "dict") else arguments  # type: ignore[union-attr]
+    activity_tracker.emit_tool_start(tool_name, arguments_dict)  # type: ignore[arg-type]
 
     # Log arguments at debug level (can be verbose)
     if hasattr(context, "arguments") and context.arguments:
@@ -69,13 +71,15 @@ async def logging_function_middleware(
 
         # Add arguments as span attributes (sanitized)
         if hasattr(context, "arguments") and context.arguments:
+            # Convert BaseModel to dict if needed, otherwise ensure it's a dict
+            args_as_dict = (
+                context.arguments.dict()
+                if hasattr(context.arguments, "dict")
+                else (context.arguments if isinstance(context.arguments, dict) else {})
+            )
             # Only add non-sensitive arguments
             safe_args = {
-                k: v
-                for k, v in (
-                    context.arguments.items() if isinstance(context.arguments, dict) else {}
-                )
-                if k not in ["token", "api_key", "password", "secret"]
+                k: v for k, v in args_as_dict.items() if k not in ["token", "api_key", "password", "secret"]
             }
             if safe_args:
                 span.set_attribute("tool.arguments", str(safe_args))
