@@ -42,7 +42,9 @@ class DirectTestRunner:
         self.current_module = None
 
         # Use provided repos_root or fall back to environment variable or default
-        self.repos_root = repos_root or Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
+        self.repos_root = repos_root or Path(
+            os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos")
+        )
 
     def _parse_provider_to_profiles(self, provider: str) -> List[str]:
         """Parse provider string into list of profiles."""

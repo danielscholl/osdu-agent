@@ -56,7 +56,9 @@ class DependsRunner(BaseRunner):
         self._log_file_handle: Optional[TextIOWrapper] = None
 
         # Use provided repos_root or fall back to environment variable or default
-        self.repos_root = repos_root or Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
+        self.repos_root = repos_root or Path(
+            os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos")
+        )
 
     @property
     def log_prefix(self) -> str:
