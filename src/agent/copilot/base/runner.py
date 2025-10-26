@@ -60,9 +60,13 @@ class BaseRunner(ABC):
         self.tracker: Optional["BaseTracker"] = None  # Must be set by subclass
         self._output_panel_renderable = _OutputPanelRenderable(self)
 
-        # Generate log file path - subclasses should override log_prefix
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.log_file = log_dir / f"{self.log_prefix}_{timestamp}.log"
+        # Generate log file path only if logging is enabled
+        # Subclasses should override log_prefix
+        if log_dir is not None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            self.log_file = log_dir / f"{self.log_prefix}_{timestamp}.log"
+        else:
+            self.log_file = None
 
     @property
     @abstractmethod
@@ -160,10 +164,16 @@ class BaseRunner(ABC):
             if total_lines > target_lines:
                 truncated = total_lines - target_lines
                 plural = "s" if truncated != 1 else ""
-                output_text.append(
-                    f"... ({truncated} earlier line{plural} hidden; full log saved to {self.log_file.name})\n",
-                    style="dim",
-                )
+                if self.log_file is not None:
+                    output_text.append(
+                        f"... ({truncated} earlier line{plural} hidden; full log saved to {self.log_file.name})\n",
+                        style="dim",
+                    )
+                else:
+                    output_text.append(
+                        f"... ({truncated} earlier line{plural} hidden)\n",
+                        style="dim",
+                    )
                 lines = lines[-target_lines:]
 
             len(lines) if lines else 1
@@ -293,6 +303,10 @@ class BaseRunner(ABC):
         Args:
             return_code: Process return code
         """
+        # Skip logging if log directory is not configured
+        if self.log_file is None:
+            return
+
         try:
             with open(self.log_file, "w") as f:
                 f.write(f"{'='*70}\n")

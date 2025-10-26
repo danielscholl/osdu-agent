@@ -44,7 +44,7 @@ class ForkDirectClient:
 
         Args:
             config: Agent configuration with GitHub settings
-            repos_dir: Directory for cloned repositories (defaults to ./repos)
+            repos_dir: Directory for cloned repositories (defaults to config.repos_root)
         """
         self.config = config
 
@@ -65,7 +65,7 @@ class ForkDirectClient:
             logger.info("Using GitHub without authentication (rate limited)")
 
         # Set repos directory
-        self.repos_dir = repos_dir or Path.cwd() / "repos"
+        self.repos_dir = repos_dir or config.repos_root
         self.repos_dir.mkdir(exist_ok=True)
 
     async def fork_service(

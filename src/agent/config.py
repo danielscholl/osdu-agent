@@ -2,6 +2,7 @@
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import List, Literal, Optional
 
 from dotenv import load_dotenv
@@ -18,6 +19,7 @@ class AgentConfig:
     Attributes:
         organization: GitHub organization name
         repositories: List of repository names to manage
+        repos_root: Root directory for cloned repositories
         github_token: GitHub personal access token (optional, can use env var)
         gitlab_url: GitLab instance URL (optional, defaults to https://gitlab.com)
         gitlab_token: GitLab personal access token (optional)
@@ -38,6 +40,10 @@ class AgentConfig:
             "OSDU_AGENT_REPOSITORIES",
             "partition,legal,entitlements,schema,file,storage,indexer,indexer-queue,search,workflow",
         ).split(",")
+    )
+
+    repos_root: Path = field(
+        default_factory=lambda: Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
     )
 
     github_token: Optional[str] = field(default_factory=lambda: os.getenv("GITHUB_TOKEN"))

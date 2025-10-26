@@ -363,10 +363,10 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
             available_services = await detect_available_services(config)
 
             if not available_services:
-                return "Error: No available services found in ./repos/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services)}[/cyan]")
+            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
             console.print()
 
         services = copilot_module.parse_services(
@@ -416,10 +416,10 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
             available_services = await detect_available_services(config)
 
             if not available_services:
-                return "Error: No available services found in ./repos/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services)}[/cyan]")
+            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
             console.print()
 
         services = copilot_module.parse_services(
@@ -476,10 +476,10 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
             available_services = await detect_available_services(config)
 
             if not available_services:
-                return "Error: No available services found in ./repos/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services)}[/cyan]")
+            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
             console.print()
 
         services = copilot_module.parse_services(
@@ -617,10 +617,10 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
             available_services = await detect_available_services(config)
 
             if not available_services:
-                return "Error: No available services found in ./repos/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services)}[/cyan]")
+            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
             console.print()
 
         services = copilot_module.parse_services(
@@ -778,7 +778,7 @@ async def detect_available_services(config: AgentConfig) -> List[str]:
     """Detect services that exist both locally and on GitHub.
 
     This function performs a dual check:
-    1. Local existence: Service directory exists at ./repos/<service>/
+    1. Local existence: Service directory exists at <repos_root>/<service>/
     2. Remote existence: Repository exists in the configured GitHub organization
 
     Only services passing both checks are returned. This ensures commands
@@ -792,7 +792,7 @@ async def detect_available_services(config: AgentConfig) -> List[str]:
     """
     from agent.github.direct_client import GitHubDirectClient
 
-    repos_dir = Path("./repos")
+    repos_dir = config.repos_root
 
     # Check if repos directory exists
     if not repos_dir.exists() or not repos_dir.is_dir():
@@ -839,17 +839,19 @@ async def detect_available_services(config: AgentConfig) -> List[str]:
     return sorted(available_services)
 
 
-def format_auto_detection_message(services: List[str]) -> str:
+def format_auto_detection_message(services: List[str], config: Optional[AgentConfig] = None) -> str:
     """Format a user-friendly message about auto-detected services.
 
     Args:
         services: List of detected service names
+        config: Agent configuration (optional, for custom repos path)
 
     Returns:
         Formatted message string
     """
     if not services:
-        return "No available services found in ./repos/"
+        repos_path = config.repos_root if config else Path("./repos")
+        return f"No available services found in {repos_path}/"
 
     count = len(services)
     service_word = "service" if count == 1 else "services"
@@ -1492,13 +1494,13 @@ async def async_main(args: Optional[list[str]] = None) -> int:
 
             if not available_services:
                 console.print(
-                    "[red]Error:[/red] No available services found in ./repos/", style="bold red"
+                    f"[red]Error:[/red] No available services found in {config.repos_root}/", style="bold red"
                 )
                 console.print("[dim]Run 'osdu fork --service all' to clone repositories[/dim]")
                 return 1
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services)}[/cyan]")
+            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
             console.print()
 
         services = copilot_module.parse_services(
@@ -1540,13 +1542,13 @@ async def async_main(args: Optional[list[str]] = None) -> int:
 
             if not available_services:
                 console.print(
-                    "[red]Error:[/red] No available services found in ./repos/", style="bold red"
+                    f"[red]Error:[/red] No available services found in {config.repos_root}/", style="bold red"
                 )
                 console.print("[dim]Run 'osdu fork --service all' to clone repositories[/dim]")
                 return 1
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services)}[/cyan]")
+            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
             console.print()
 
         services = copilot_module.parse_services(
@@ -1590,13 +1592,13 @@ async def async_main(args: Optional[list[str]] = None) -> int:
 
             if not available_services:
                 console.print(
-                    "[red]Error:[/red] No available services found in ./repos/", style="bold red"
+                    f"[red]Error:[/red] No available services found in {config.repos_root}/", style="bold red"
                 )
                 console.print("[dim]Run 'osdu fork --service all' to clone repositories[/dim]")
                 return 1
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services)}[/cyan]")
+            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
             console.print()
 
         services = copilot_module.parse_services(
@@ -1798,13 +1800,13 @@ async def async_main(args: Optional[list[str]] = None) -> int:
 
             if not available_services:
                 console.print(
-                    "[red]Error:[/red] No available services found in ./repos/", style="bold red"
+                    f"[red]Error:[/red] No available services found in {config.repos_root}/", style="bold red"
                 )
                 console.print("[dim]Run 'osdu fork --service all' to clone repositories[/dim]")
                 return 1
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services)}[/cyan]")
+            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
             console.print()
 
         services = copilot_module.parse_services(

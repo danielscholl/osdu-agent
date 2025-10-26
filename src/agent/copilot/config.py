@@ -1,6 +1,7 @@
 """Configuration management for Copilot CLI wrapper."""
 
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -14,7 +15,7 @@ class CopilotConfig(BaseSettings):
     organization: str = "azure"
     template_repo: str = "azure/osdu-spi"
     default_branch: str = "main"
-    log_directory: str = "logs"
+    log_directory: Optional[str] = None
 
 
 # Load environment variables from .env if it exists
@@ -25,6 +26,8 @@ if env_file.exists():
 # Initialize configuration
 config = CopilotConfig()
 
-# Ensure log directory exists
-log_dir = Path(config.log_directory)
-log_dir.mkdir(exist_ok=True)
+# Only create log directory if configured
+log_dir: Optional[Path] = None
+if config.log_directory:
+    log_dir = Path(config.log_directory)
+    log_dir.mkdir(exist_ok=True)

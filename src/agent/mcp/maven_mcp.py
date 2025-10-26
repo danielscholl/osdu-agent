@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 from agent_framework import MCPStdioTool
 
 from agent.config import AgentConfig
+from agent.copilot.config import log_dir
 from agent.mcp.tool_arg_normalizer import normalize_maven_tool_arguments
 
 logger = logging.getLogger(__name__)
@@ -37,23 +38,22 @@ class QuietMCPStdioTool(MCPStdioTool):
         """
         super().__init__(*args, **kwargs)
 
-        # Generate timestamped log path following convention
-        if stderr_log_path is None:
-            logs_dir = Path("logs")
-            logs_dir.mkdir(exist_ok=True)
+        # Generate timestamped log path only if logging is enabled
+        if stderr_log_path is None and log_dir is not None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            stderr_log_path = logs_dir / f"maven_mcp_{timestamp}.log"
+            stderr_log_path = log_dir / f"maven_mcp_{timestamp}.log"
 
         self._stderr_log_path = stderr_log_path
         self._stderr_file = None
 
     async def __aenter__(self):
         """Enter async context - start server with stderr redirected."""
-        # Open stderr log file before starting server
+        # Open stderr log file before starting server (only if logging enabled)
         try:
-            self._stderr_file = open(self._stderr_log_path, "w", buffering=1)
-            self._stderr_file.write(f"Maven MCP Server Log - {datetime.now().isoformat()}\n")
-            self._stderr_file.write("=" * 70 + "\n\n")
+            if self._stderr_log_path is not None:
+                self._stderr_file = open(self._stderr_log_path, "w", buffering=1)
+                self._stderr_file.write(f"Maven MCP Server Log - {datetime.now().isoformat()}\n")
+                self._stderr_file.write("=" * 70 + "\n\n")
         except Exception as e:
             logger.warning(f"Could not open stderr log file: {e}")
             self._stderr_file = None

@@ -35,7 +35,7 @@ class GitRepositoryTools:
         """
         self.config = config
         # Use absolute path for security validation
-        self.repos_dir = Path("./repos").resolve()
+        self.repos_dir = config.repos_root.resolve()
         logger.debug(f"Git tools initialized with repos_dir: {self.repos_dir}")
 
     def _sanitize_service_name(self, service: str) -> str:

@@ -1,6 +1,7 @@
 """Dependency update analysis runner for Maven version checking."""
 
 import asyncio
+import os
 import re
 from datetime import datetime
 from importlib.resources.abc import Traversable
@@ -33,6 +34,7 @@ class DependsRunner(BaseRunner):
         create_issue: bool = False,
         providers: Optional[List[str]] = None,
         include_testing: bool = False,
+        repos_root: Optional[Path] = None,
     ):
         """Initialize dependency analysis runner.
 
@@ -43,6 +45,7 @@ class DependsRunner(BaseRunner):
             create_issue: Whether to create tracking issues for updates
             providers: Provider modules to include (default: ["azure"])
             include_testing: Whether to include testing modules (default: False)
+            repos_root: Root directory for repositories (optional)
         """
         super().__init__(prompt_file, services)
         self.agent = agent
@@ -51,6 +54,9 @@ class DependsRunner(BaseRunner):
         self.include_testing = include_testing
         self.tracker: DependsTracker = DependsTracker(services)  # Override type from BaseRunner
         self._log_file_handle: Optional[TextIOWrapper] = None
+
+        # Use provided repos_root or fall back to environment variable or default
+        self.repos_root = repos_root or Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
 
     @property
     def log_prefix(self) -> str:
@@ -192,7 +198,7 @@ IMPORTANT: "core" is always analyzed as the base dependency. Providers are: core
 
         # Replace template placeholders
         prompt = check_template.replace("{{SERVICE}}", service)
-        prompt = prompt.replace("{{WORKSPACE}}", f"./repos/{service}")
+        prompt = prompt.replace("{{WORKSPACE}}", str(self.repos_root / service))
 
         # Add filtering instructions based on provider/testing flags
         filter_instructions = self._get_filter_instructions()
@@ -219,7 +225,7 @@ IMPORTANT: "core" is always analyzed as the base dependency. Providers are: core
             self.output_lines.append(f"Starting dependency analysis for {service}...")
             self.output_lines.append("✓ Extract dependencies from POM")
             self.output_lines.append("   $ analyze_pom_file_tool")
-            self.output_lines.append(f"     pom_file_path: ./repos/{service}/pom.xml")
+            self.output_lines.append(f"     pom_file_path: {self.repos_root / service / 'pom.xml'}")
             self.output_lines.append("✓ Batch check versions")
             self.output_lines.append("   $ check_version_batch_tool")
             self.output_lines.append(f"   ↪ Analyzing modules: {', '.join(modules_to_analyze)}")
@@ -841,6 +847,10 @@ IMPORTANT: "core" is always analyzed as the base dependency. Providers are: core
         Args:
             text: Text to append to log file
         """
+        # Skip logging if log directory is not configured
+        if self.log_file is None:
+            return
+
         if self._log_file_handle is None:
             # Open log file for streaming writes
             self._log_file_handle = open(self.log_file, "w", buffering=1)  # Line buffered
@@ -1019,6 +1029,10 @@ IMPORTANT: "core" is always analyzed as the base dependency. Providers are: core
         Args:
             return_code: Process return code
         """
+        # Skip logging if log directory is not configured
+        if self.log_file is None:
+            return
+
         try:
             with open(self.log_file, "w") as f:
                 f.write(f"{'='*70}\n")

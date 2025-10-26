@@ -1,6 +1,7 @@
 """Vulnerability analysis runner for Maven dependency and CVE scanning."""
 
 import asyncio
+import os
 import re
 from datetime import datetime
 from importlib.resources.abc import Traversable
@@ -32,6 +33,7 @@ class VulnsRunner(BaseRunner):
         severity_filter: Optional[List[str]] = None,
         providers: Optional[List[str]] = None,
         include_testing: bool = False,
+        repos_root: Optional[Path] = None,
     ):
         """Initialize vulnerability analysis runner.
 
@@ -43,6 +45,7 @@ class VulnsRunner(BaseRunner):
             severity_filter: List of severity levels to include (None = all)
             providers: Provider modules to include (default: ["azure"])
             include_testing: Whether to include testing modules (default: False)
+            repos_root: Root directory for repositories (optional)
         """
         super().__init__(prompt_file, services)
         self.agent = agent
@@ -51,6 +54,9 @@ class VulnsRunner(BaseRunner):
         self.providers = providers or ["azure"]  # Default to azure
         self.include_testing = include_testing
         self.tracker: VulnsTracker = VulnsTracker(services)  # Override type from BaseRunner
+
+        # Use provided repos_root or fall back to environment variable or default
+        self.repos_root = repos_root or Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
 
     @property
     def log_prefix(self) -> str:
@@ -197,11 +203,11 @@ Do NOT include other providers or testing modules unless specified.
 
         # Replace template placeholders
         prompt = scan_template.replace("{{SERVICE}}", service)
-        prompt = scan_template.replace("{{WORKSPACE}}", f"./repos/{service}")
+        prompt = scan_template.replace("{{WORKSPACE}}", str(self.repos_root / service))
 
         # Add filtering instructions based on provider/testing flags
         filter_instructions = self._get_filter_instructions()
-        prompt = prompt.replace("{{WORKSPACE}}", f"./repos/{service}")
+        prompt = prompt.replace("{{WORKSPACE}}", str(self.repos_root / service))
         prompt += f"\n\n**FILTERING INSTRUCTIONS:**\n{filter_instructions}"
 
         # Add issue creation if requested
@@ -220,7 +226,7 @@ Do NOT include other providers or testing modules unless specified.
             self.output_lines.append(f"Starting vulnerability scan for {service}...")
             self.output_lines.append("✓ Scan Java project")
             self.output_lines.append("   $ scan_java_project_tool")
-            self.output_lines.append(f"     workspace: ./repos/{service}")
+            self.output_lines.append(f"     workspace: {self.repos_root / service}")
             self.output_lines.append("     scan_all_modules: true (get complete data)")
             self.output_lines.append("     max_results: 100")
             self.output_lines.append(f"   ↪ Analyzing modules: {', '.join(modules_to_analyze)}")
@@ -1147,6 +1153,10 @@ Do NOT include other providers or testing modules unless specified.
         Args:
             return_code: Process return code
         """
+        # Skip logging if log directory is not configured
+        if self.log_file is None:
+            return
+
         try:
             with open(self.log_file, "w") as f:
                 f.write(f"{'='*70}\n")

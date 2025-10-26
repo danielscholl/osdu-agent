@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import re
 import subprocess
 import xml.etree.ElementTree as ET
@@ -28,6 +29,7 @@ class DirectTestRunner:
         self,
         services: List[str],
         provider: str = "core,azure",
+        repos_root: Optional[Path] = None,
     ):
         self.services = services
         self.provider = provider
@@ -38,6 +40,9 @@ class DirectTestRunner:
 
         # Track current module being built (for per-profile test count parsing)
         self.current_module = None
+
+        # Use provided repos_root or fall back to environment variable or default
+        self.repos_root = repos_root or Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
 
     def _parse_provider_to_profiles(self, provider: str) -> List[str]:
         """Parse provider string into list of profiles."""
@@ -327,7 +332,7 @@ class DirectTestRunner:
         logger.info(f"[{service}] Starting test execution")
 
         # Locate service directory
-        base_path = Path.cwd() / "repos" / service
+        base_path = self.repos_root / service
         if not base_path.exists():
             base_path = Path.cwd() / service
 
@@ -420,7 +425,7 @@ class DirectTestRunner:
 
     def _generate_coverage_for_service(self, service: str) -> Tuple[bool, str]:
         """Generate coverage reports for a single service."""
-        base_path = Path.cwd() / "repos" / service
+        base_path = self.repos_root / service
         if not base_path.exists():
             base_path = Path.cwd() / service
 
@@ -739,7 +744,7 @@ class DirectTestRunner:
         """Extract coverage data from JaCoCo reports."""
         for service in self.services:
             search_paths = [
-                Path.cwd() / "repos" / service,
+                self.repos_root / service,
                 Path.cwd() / service,
             ]
 
