@@ -1,8 +1,9 @@
 # Dependabot configuration for automated dependency updates
 version: 2
 updates:
-  # Python dependencies
-  - package-ecosystem: "pip"
+  # Python dependencies (using uv package manager)
+  # Dependabot will update both pyproject.toml and uv.lock
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
