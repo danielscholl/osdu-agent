@@ -368,7 +368,9 @@ class FileSystemTools:
                     if managed_dep_item["version"] != managed_dep_item["resolved_version"]:
                         version_str = f"{managed_dep_item['version']} → {managed_dep_item['resolved_version']}"
 
-                    output_lines.append(f"  {managed_dep_item['groupId']}:{managed_dep_item['artifactId']}:{version_str}\n")
+                    output_lines.append(
+                        f"  {managed_dep_item['groupId']}:{managed_dep_item['artifactId']}:{version_str}\n"
+                    )
 
             return "".join(output_lines)
 

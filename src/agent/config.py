@@ -35,7 +35,8 @@ class AgentConfig:
 
     repositories: List[str] = field(
         default_factory=lambda: os.getenv(
-            "OSDU_AGENT_REPOSITORIES", "partition,legal,entitlements,schema,file,storage"
+            "OSDU_AGENT_REPOSITORIES",
+            "partition,legal,entitlements,schema,file,storage,indexer,indexer-queue,search,workflow",
         ).split(",")
     )
 

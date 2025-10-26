@@ -127,7 +127,7 @@ The agent requires environment variables for Azure OpenAI access. Configure thes
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OSDU_AGENT_ORGANIZATION` | `azure` | GitHub organization to manage |
-| `OSDU_AGENT_REPOSITORIES` | `partition,legal,entitlements,schema,file,storage` | Comma-separated repository list |
+| `OSDU_AGENT_REPOSITORIES` | `partition,legal,entitlements,schema,file,storage,indexer,indexer-queue,search,workflow` | Comma-separated repository list |
 | `GITLAB_URL` | `https://gitlab.com` | GitLab instance URL (for self-hosted instances) |
 | `GITLAB_TOKEN` | *(none)* | GitLab personal access token (enables GitLab integration) |
 | `GITLAB_DEFAULT_GROUP` | *(none)* | Default GitLab group/namespace for projects |

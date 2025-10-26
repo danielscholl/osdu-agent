@@ -79,7 +79,9 @@ async def logging_function_middleware(
             )
             # Only add non-sensitive arguments
             safe_args = {
-                k: v for k, v in args_as_dict.items() if k not in ["token", "api_key", "password", "secret"]
+                k: v
+                for k, v in args_as_dict.items()
+                if k not in ["token", "api_key", "password", "secret"]
             }
             if safe_args:
                 span.set_attribute("tool.arguments", str(safe_args))
