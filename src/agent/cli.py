@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import importlib.metadata
 import importlib.util
 import sys
 import types
@@ -1260,6 +1261,18 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
                 emitter.set_interactive_mode(False, False)
 
 
+def _get_version() -> str:
+    """Get the package version.
+
+    Returns:
+        Version string (e.g., "0.1.1")
+    """
+    try:
+        return importlib.metadata.version("osdu-agent")
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Create CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -1455,6 +1468,11 @@ Examples:
         "--verbose",
         action="store_true",
         help="Show detailed execution tree with tool calls (single-query mode only)",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {_get_version()}",
     )
 
     return parser
