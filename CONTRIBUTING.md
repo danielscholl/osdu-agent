@@ -6,7 +6,7 @@ Thank you for your interest in contributing to the OSDU Agent!
 
 ### Prerequisites
 
-- Python 3.11 or higher
+- Python 3.12 or higher
 - [uv](https://github.com/astral-sh/uv) package manager
 - Git
 - GitHub CLI (`gh`) for testing GitHub integrations (optional)
@@ -69,7 +69,7 @@ uv run ruff check --fix src/ tests/
 uv run black --check src/
 uv run ruff check src/
 uv run mypy src/
-uv run pytest --cov=src/agent --cov-fail-under=70
+uv run pytest --cov=src/agent --cov-fail-under=60
 ```
 
 ### CI Pipeline
@@ -78,20 +78,22 @@ Our GitHub Actions CI runs the following checks:
 
 1. **Black**: Code formatting (strict)
 2. **Ruff**: Linting and code quality
-3. **MyPy**: Type checking (strict for `src/`, excluded for `tests/` and `repos/`)
-4. **PyTest**: Test suite with 70% minimum coverage
+3. **MyPy**: Type checking (excluded for `tests/`, `repos/`, `copilot/`, `workflows/`, `display/`, `mcp/`)
+4. **PyTest**: Test suite with 60% minimum coverage
 
 All checks must pass for PRs to be merged.
 
 ### Type Checking
 
-We use strict type checking with MyPy:
+We use type checking with MyPy for core modules:
 
 ```toml
 # pyproject.toml
 [tool.mypy]
-disallow_untyped_defs = true  # Strict: all functions need type hints
-exclude = ["^repos/", "^tests/"]  # Only check src/
+python_version = "3.12"
+disallow_untyped_defs = false
+check_untyped_defs = true
+exclude = ["^repos/", "^tests/", "^src/agent/copilot/", "^src/agent/workflows/", "^src/agent/display/", "^src/agent/mcp/"]
 ```
 
 **Guidelines:**
@@ -135,7 +137,7 @@ uv run pytest tests/test_agent.py -vv
 
 ```bash
 # Run with coverage report
-uv run pytest --cov=src/agent --cov-report=term-missing --cov-fail-under=70
+uv run pytest --cov=src/agent --cov-report=term-missing --cov-fail-under=60
 
 # Generate HTML coverage report
 uv run pytest --cov=src/agent --cov-report=html
@@ -314,7 +316,7 @@ Slash commands are implemented as workflows that can be called from both modes.
 Reviewers will verify:
 
 - [ ] All CI checks pass (Black, Ruff, MyPy, PyTest)
-- [ ] Test coverage ≥ 70%
+- [ ] Test coverage ≥ 60%
 - [ ] Type hints on all public functions
 - [ ] Docstrings for public APIs
 - [ ] Conventional commit format

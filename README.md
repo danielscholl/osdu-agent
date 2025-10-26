@@ -168,34 +168,9 @@ For command-line options:
 osdu --help
 ```
 
-## Development & Testing
+## Contributing
 
-For local development and testing, clone the repository and install in editable mode:
-
-```bash
-# Clone the repository
-git clone https://github.com/danielscholl/osdu-agent.git
-cd osdu-agent
-
-# Configure environment variables (optional - uses shell profile by default)
-cp .env.example .env
-# Edit .env with your values if preferred over shell profile
-
-# Install in editable mode with dev dependencies
-uv pip install -e ".[dev]" --prerelease=allow
-
-# Run tests
-uv run pytest
-
-# Run with coverage report
-uv run pytest --cov=src/agent --cov-report=term-missing
-
-# Run specific test file
-uv run pytest tests/test_agent.py -v
-```
-
-**Note:** The `.env` file is provided for convenience during development. The agent still reads from `os.getenv()`, so ensure your shell environment variables are set or use a tool like `python-dotenv` if needed.
-
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code quality guidelines, and contribution workflow.
 
 ## License
 
