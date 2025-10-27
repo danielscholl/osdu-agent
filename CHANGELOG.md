@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.1...osdu-agent-v0.1.2) (2025-10-27)
+
+
+### Features
+
+* **cli:** add version flag with package metadata support ([#7](https://github.com/danielscholl/osdu-agent/issues/7)) ([2aee77d](https://github.com/danielscholl/osdu-agent/commit/2aee77d5bf8c3f906097ae54a40fd817b03a2a2e))
+
 ## [0.1.1](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.0...osdu-agent-v0.1.1) (2025-10-26)
 
 
