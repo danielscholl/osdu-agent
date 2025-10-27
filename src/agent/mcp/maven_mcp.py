@@ -33,29 +33,39 @@ class QuietMCPStdioTool(MCPStdioTool):
 
         Args:
             *args: Positional arguments for MCPStdioTool
-            stderr_log_path: Path to redirect stderr output (default: logs/maven_mcp_TIMESTAMP.log)
+            stderr_log_path: Path to redirect stderr output (default: logs/maven_mcp_TIMESTAMP.log if logging enabled, /dev/null otherwise)
             **kwargs: Keyword arguments for MCPStdioTool
         """
         super().__init__(*args, **kwargs)
 
-        # Generate timestamped log path only if logging is enabled
-        if stderr_log_path is None and log_dir is not None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            stderr_log_path = log_dir / f"maven_mcp_{timestamp}.log"
+        # Determine stderr redirection target
+        if stderr_log_path is None:
+            if log_dir is not None:
+                # Logging enabled - redirect to timestamped log file
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                stderr_log_path = log_dir / f"maven_mcp_{timestamp}.log"
+            else:
+                # Logging disabled - redirect to /dev/null
+                stderr_log_path = Path("/dev/null")
 
         self._stderr_log_path = stderr_log_path
         self._stderr_file = None
 
     async def __aenter__(self):
         """Enter async context - start server with stderr redirected."""
-        # Open stderr log file before starting server (only if logging enabled)
+        # Open stderr redirection target
         try:
             if self._stderr_log_path is not None:
                 self._stderr_file = open(self._stderr_log_path, "w", buffering=1)
-                self._stderr_file.write(f"Maven MCP Server Log - {datetime.now().isoformat()}\n")
-                self._stderr_file.write("=" * 70 + "\n\n")
+
+                # Write headers only if not /dev/null
+                if str(self._stderr_log_path) != "/dev/null":
+                    self._stderr_file.write(
+                        f"Maven MCP Server Log - {datetime.now().isoformat()}\n"
+                    )
+                    self._stderr_file.write("=" * 70 + "\n\n")
         except Exception as e:
-            logger.warning(f"Could not open stderr log file: {e}")
+            logger.warning(f"Could not open stderr redirection target: {e}")
             self._stderr_file = None
 
         # Redirect stderr at the file descriptor level
@@ -88,9 +98,11 @@ class QuietMCPStdioTool(MCPStdioTool):
         # Call parent cleanup first
         result = await super().__aexit__(exc_type, exc_val, exc_tb)
 
-        # Close stderr log file
+        # Close stderr redirection file
         if self._stderr_file and not self._stderr_file.closed:
-            self._stderr_file.write(f"\n\nServer shutdown - {datetime.now().isoformat()}\n")
+            # Write shutdown message only if not /dev/null
+            if str(self._stderr_log_path) != "/dev/null":
+                self._stderr_file.write(f"\n\nServer shutdown - {datetime.now().isoformat()}\n")
             self._stderr_file.close()
 
         return result
