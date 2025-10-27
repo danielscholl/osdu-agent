@@ -33,7 +33,7 @@ class QuietMCPStdioTool(MCPStdioTool):
 
         Args:
             *args: Positional arguments for MCPStdioTool
-            stderr_log_path: Path to redirect stderr output (default: logs/maven_mcp_TIMESTAMP.log if logging enabled, os.devnull otherwise)
+            stderr_log_path: Path to redirect stderr output (default: logs/maven_mcp_TIMESTAMP.log if logging enabled, the platform null device otherwise)
             **kwargs: Keyword arguments for MCPStdioTool
         """
         super().__init__(*args, **kwargs)

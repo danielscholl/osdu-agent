@@ -768,8 +768,10 @@ async def _count_local_repos(config: AgentConfig) -> int:
 
     # Count local service directories
     try:
+        # Convert to set for O(1) lookup instead of O(n) list search
+        repos_set = set(config.repositories)
         local_count = sum(
-            1 for item in repos_dir.iterdir() if item.is_dir() and item.name in config.repositories
+            1 for item in repos_dir.iterdir() if item.is_dir() and item.name in repos_set
         )
         return local_count
     except (OSError, PermissionError):
@@ -803,10 +805,10 @@ async def detect_available_services(config: AgentConfig) -> List[str]:
 
     # Get list of local service directories
     try:
+        # Convert to set for O(1) lookup instead of O(n) list search
+        repos_set = set(config.repositories)
         local_services = [
-            item.name
-            for item in repos_dir.iterdir()
-            if item.is_dir() and item.name in config.repositories
+            item.name for item in repos_dir.iterdir() if item.is_dir() and item.name in repos_set
         ]
     except (OSError, PermissionError):
         # Handle permission errors or other file system issues gracefully
