@@ -5,12 +5,143 @@ from unittest.mock import patch
 
 
 from agent.observability import (
+    initialize_observability,
     record_llm_call,
     record_test_run,
     record_tool_call,
     record_vulns_scan,
     record_workflow_run,
 )
+
+
+class TestObservabilityInitialization:
+    """Tests for observability initialization."""
+
+    def test_initialize_with_app_insights_connection_string(self):
+        """Test initialization with Application Insights connection string."""
+        connection_string = "InstrumentationKey=test-key;IngestionEndpoint=https://test.com"
+
+        with patch("agent.observability.setup_observability") as mock_setup:
+            with patch.dict(
+                os.environ,
+                {
+                    "APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string,
+                    "ENABLE_SENSITIVE_DATA": "false",
+                },
+                clear=True,
+            ):
+                result = initialize_observability()
+
+                # Should return True when initialized
+                assert result is True
+
+                # Should call setup_observability with correct parameters
+                mock_setup.assert_called_once_with(
+                    enable_sensitive_data=False,
+                    otlp_endpoint=None,
+                    applicationinsights_connection_string=connection_string,
+                )
+
+    def test_initialize_with_otlp_endpoint(self):
+        """Test initialization with OTLP endpoint."""
+        otlp_endpoint = "http://localhost:4317"
+
+        with patch("agent.observability.setup_observability") as mock_setup:
+            with patch.dict(
+                os.environ,
+                {"OTLP_ENDPOINT": otlp_endpoint, "ENABLE_SENSITIVE_DATA": "false"},
+                clear=True,
+            ):
+                result = initialize_observability()
+
+                # Should return True when initialized
+                assert result is True
+
+                # Should call setup_observability with OTLP endpoint
+                mock_setup.assert_called_once_with(
+                    enable_sensitive_data=False,
+                    otlp_endpoint=otlp_endpoint,
+                    applicationinsights_connection_string=None,
+                )
+
+    def test_initialize_with_sensitive_data_enabled(self):
+        """Test initialization with sensitive data logging enabled."""
+        connection_string = "InstrumentationKey=test-key"
+
+        with patch("agent.observability.setup_observability") as mock_setup:
+            with patch.dict(
+                os.environ,
+                {
+                    "APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string,
+                    "ENABLE_SENSITIVE_DATA": "true",
+                },
+                clear=True,
+            ):
+                result = initialize_observability()
+
+                # Should enable sensitive data logging
+                mock_setup.assert_called_once_with(
+                    enable_sensitive_data=True,
+                    otlp_endpoint=None,
+                    applicationinsights_connection_string=connection_string,
+                )
+                assert result is True
+
+    def test_initialize_without_exporters(self):
+        """Test initialization without any exporters configured."""
+        with patch("agent.observability.setup_observability") as mock_setup:
+            with patch.dict(os.environ, {}, clear=True):
+                result = initialize_observability()
+
+                # Should return False when no exporters configured
+                assert result is False
+
+                # Should not call setup_observability
+                mock_setup.assert_not_called()
+
+    def test_initialize_with_both_exporters(self):
+        """Test initialization with both App Insights and OTLP endpoint."""
+        connection_string = "InstrumentationKey=test-key"
+        otlp_endpoint = "http://localhost:4317"
+
+        with patch("agent.observability.setup_observability") as mock_setup:
+            with patch.dict(
+                os.environ,
+                {
+                    "APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string,
+                    "OTLP_ENDPOINT": otlp_endpoint,
+                    "ENABLE_SENSITIVE_DATA": "false",
+                },
+                clear=True,
+            ):
+                result = initialize_observability()
+
+                # Should pass both exporters to setup
+                mock_setup.assert_called_once_with(
+                    enable_sensitive_data=False,
+                    otlp_endpoint=otlp_endpoint,
+                    applicationinsights_connection_string=connection_string,
+                )
+                assert result is True
+
+    def test_initialize_handles_setup_failure(self):
+        """Test initialization handles setup_observability failure gracefully."""
+        connection_string = "InstrumentationKey=test-key"
+
+        with patch("agent.observability.setup_observability") as mock_setup:
+            # Make setup_observability raise an exception
+            mock_setup.side_effect = Exception("Setup failed")
+
+            with patch.dict(
+                os.environ, {"APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string}, clear=True
+            ):
+                result = initialize_observability()
+
+                # Should return False on failure
+                assert result is False
+
+                # Should have attempted to call setup
+                mock_setup.assert_called_once()
 
 
 class TestToolCallMetrics:

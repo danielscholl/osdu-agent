@@ -43,7 +43,7 @@ Configure required environment variables:
 
 ```bash
 # Required
-OSDU_AGENT_ORGANIZATION=your-github-org
+GITHUB_SPI_ORGANIZATION=your-github-org
 OSDU_AGENT_REPOSITORIES=partition,legal,entitlements
 
 # Azure OpenAI (for AI features)
