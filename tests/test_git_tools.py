@@ -1239,6 +1239,7 @@ class TestUpstreamConfiguration:
                 return "UPSTREAM_REPO_URL: https://gitlab.com/osdu/partition.git"
             elif service == "legal":
                 return "Variable 'UPSTREAM_REPO_URL' not found"
+            return None
 
         mock_var_tools.get_repository_variable.side_effect = get_var_side_effect
         mock_var_tools_class.return_value = mock_var_tools

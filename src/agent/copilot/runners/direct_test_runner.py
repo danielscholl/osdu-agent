@@ -1069,8 +1069,6 @@ class DirectTestRunner:
             total_tests += service_data["tests_run"]
             total_failed += service_data["tests_failed"]
 
-        total_tests - total_failed
-
         if total_failed > 0:
             border_color = "red"
         else:

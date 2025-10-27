@@ -271,6 +271,7 @@ class WorkflowTools(GitHubToolsBase):
                             workflow = wf
                             break
                 except Exception:
+                    # Silently ignore workflows that can't be accessed or parsed
                     pass
 
             if not workflow:

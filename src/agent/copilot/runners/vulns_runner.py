@@ -205,11 +205,10 @@ Do NOT include other providers or testing modules unless specified.
 
         # Replace template placeholders
         prompt = scan_template.replace("{{SERVICE}}", service)
-        prompt = scan_template.replace("{{WORKSPACE}}", str(self.repos_root / service))
+        prompt = prompt.replace("{{WORKSPACE}}", str(self.repos_root / service))
 
         # Add filtering instructions based on provider/testing flags
         filter_instructions = self._get_filter_instructions()
-        prompt = prompt.replace("{{WORKSPACE}}", str(self.repos_root / service))
         prompt += f"\n\n**FILTERING INSTRUCTIONS:**\n{filter_instructions}"
 
         # Add issue creation if requested
@@ -851,7 +850,6 @@ Do NOT include other providers or testing modules unless specified.
 
             if modules:
                 # Show overall service row first
-                critical + high + medium
                 svc_grade = self._calculate_service_grade(critical, high, medium)
                 grade_style = {
                     "A": "green bold",
@@ -931,7 +929,6 @@ Do NOT include other providers or testing modules unless specified.
                             )
             else:
                 # No module breakdown - show service row only
-                critical + high + medium
                 svc_grade = self._calculate_service_grade(critical, high, medium)
                 grade_style = {
                     "A": "green bold",
@@ -1084,10 +1081,8 @@ Do NOT include other providers or testing modules unless specified.
             # Run with Live display
             with Live(layout, console=console, refresh_per_second=2) as live:
                 # Run services in parallel (max 2 at a time to avoid overwhelming display)
-                from asyncio import Semaphore, gather
-
                 # Limit concurrent scans to 2 (balance speed vs display clarity)
-                semaphore = Semaphore(2)
+                semaphore = asyncio.Semaphore(2)
 
                 async def run_with_limit(service: str, svc_idx: int) -> str:
                     async with semaphore:
@@ -1109,7 +1104,7 @@ Do NOT include other providers or testing modules unless specified.
                 tasks = [
                     run_with_limit(service, idx) for idx, service in enumerate(self.services, 1)
                 ]
-                await gather(*tasks)
+                await asyncio.gather(*tasks)
 
                 # Add scan completion message to output panel
                 self.output_lines.append("✓ Scans complete for all services")

@@ -192,6 +192,7 @@ def _get_status_bar_content(config: AgentConfig) -> tuple[str, str]:
         if result.returncode == 0:
             branch = f" [⎇ {result.stdout.strip()}]"
     except Exception:
+        # Not a git repository or git command failed - skip branch display
         pass
 
     # Build status line (without markup for length calculation)
@@ -1212,6 +1213,7 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
                         try:
                             await update_task
                         except asyncio.CancelledError:
+                            # Expected cancellation of status update task
                             pass
                         status_handle.stop()
 

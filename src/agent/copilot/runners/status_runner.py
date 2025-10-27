@@ -809,6 +809,9 @@ class StatusRunner(BaseRunner):
             if all_workflows:
                 len(all_workflows)
 
+                # Initialize counters
+                needs_approval_count = 0
+
                 # Count by status
                 if is_gitlab:
                     sum(1 for w in all_workflows if w.get("status") == "success")

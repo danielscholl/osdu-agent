@@ -54,19 +54,11 @@ Supports issues, PRs, workflows, code scanning. Includes dependency analysis and
 # 1. Install
 uv tool install --prerelease=allow git+https://github.com/danielscholl/osdu-agent.git
 
+# Upgrade
+uv tool upgrade osdu-agent
+
 # 2. Configure required credentials
 cp .env.example .env
-```
-
-**Edit `.env` with required settings:**
-
-```bash
-# Azure OpenAI (Required)
-AZURE_OPENAI_ENDPOINT=https://your-endpoint.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT_NAME=gpt-5-mini
-
-# Observability (Optional - auto-fetch from Azure AI Foundry)
-# AZURE_AI_PROJECT_CONNECTION_STRING=eastus.api.azureml.ms;sub-id;resource-group;workspace-name
 ```
 
 **Authenticate with CLI tools** (recommended):
@@ -83,15 +75,6 @@ glab auth login # For GitLab (optional - only if using GitLab features)
 # GITLAB_TOKEN=your-token
 ```
 
-**Authentication priority:**
-- GitHub: `gh auth token` → `GITHUB_TOKEN` env var → unauthenticated
-- GitLab: `glab auth status --show-token` → `GITLAB_TOKEN` env var
-
-```bash
-# 3. Run
-osdu
-```
-
 ## Usage
 
 ```bash
@@ -104,27 +87,6 @@ osdu -p "List issues in partition"
 # Get help
 osdu --help
 ```
-
-Maven dependency scanning available via [Maven MCP Server](https://github.com/danielscholl/mvn-mcp-server) (auto-installed). For vulnerability scanning, install [Trivy](https://trivy.dev) (optional).
-
-## Observability (Optional)
-
-Enable Application Insights telemetry to track agent operations, LLM calls, and tool executions.
-
-**Setup:** Add to `.env`:
-```bash
-AZURE_AI_PROJECT_CONNECTION_STRING=eastus.api.azureml.ms;sub-id;resource-group;workspace-name
-```
-
-The agent automatically fetches the Application Insights connection string from your Azure AI Foundry workspace (requires `az login` and Reader access).
-
-**View traces:**
-- **Azure AI Foundry**: https://ai.azure.com → Tracing (enhanced UI for AI agents)
-- **Application Insights**: Azure Portal → Transaction search (traditional APM)
-
-Every trace includes: user ID, session ID, token usage, and operation details.
-
-For complete setup guide, see [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)
 
 ## Contributing
 

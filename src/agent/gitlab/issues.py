@@ -272,6 +272,7 @@ class IssueTools(GitLabToolsBase):
                         if users:
                             assignee_ids.append(users[0].id)
                     except GitlabError:
+                        # User not found or API error - skip this assignee
                         pass
 
                 update_data["assignee_ids"] = assignee_ids  # type: ignore[assignment]

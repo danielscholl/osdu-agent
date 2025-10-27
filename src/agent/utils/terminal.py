@@ -36,6 +36,7 @@ def supports_ansi_codes() -> bool:
                 build = int(version.split(".")[2])
                 return build >= 10586  # Windows 10 version 1511
         except (ValueError, IndexError, ImportError):
+            # Failed to parse Windows version or platform module not available
             pass
 
     return False
