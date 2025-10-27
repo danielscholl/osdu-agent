@@ -7,9 +7,12 @@ OpenTelemetry integration, enabling monitoring via Azure AI Foundry dashboards.
 import logging
 import os
 from contextvars import ContextVar
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
 from agent_framework.observability import get_meter, get_tracer, setup_observability
+
+if TYPE_CHECKING:
+    from opentelemetry import trace
 
 logger = logging.getLogger(__name__)
 
@@ -293,8 +296,15 @@ class UserSessionSpanProcessor:
     Implements the SpanProcessor protocol for OpenTelemetry.
     """
 
-    def on_start(self, span, parent_context=None):  # type: ignore[no-untyped-def]
-        """Called when a span is started - inject user/session attributes."""
+    def on_start(
+        self, span: "trace.Span", parent_context: Optional["trace.Context"] = None
+    ) -> None:
+        """Called when a span is started - inject user/session attributes.
+
+        Args:
+            span: The span that was started
+            parent_context: Optional parent context
+        """
         try:
             user_context = get_user_session_context()
             if user_context:
@@ -304,21 +314,33 @@ class UserSessionSpanProcessor:
         except Exception as e:
             logger.debug(f"Error injecting user context into span: {e}")
 
-    def on_end(self, span):  # type: ignore[no-untyped-def]
-        """Called when a span ends - no-op."""
+    def on_end(self, span: "trace.Span") -> None:
+        """Called when a span ends - no-op.
+
+        Args:
+            span: The span that ended
+        """
         pass
 
-    def shutdown(self):  # type: ignore[no-untyped-def]
-        """Called on shutdown - no-op."""
+    def shutdown(self) -> None:
+        """Called on shutdown - performs cleanup (no-op for this processor)."""
         pass
 
-    def force_flush(self, timeout_millis=30000):  # type: ignore[no-untyped-def]
-        """Called to force flush - no-op."""
-        pass
+    def force_flush(self, timeout_millis: int = 30000) -> bool:
+        """Called to force flush - no-op for this processor.
+
+        Args:
+            timeout_millis: Timeout in milliseconds
+
+        Returns:
+            bool: Always returns True (no flushing needed)
+        """
+        return True
 
 
 # Initialize observability automatically on module import
-_observability_initialized = initialize_observability()
+# Called for side effects (sets up exporters if configured)
+initialize_observability()
 
 # Initialize OpenTelemetry tracer and meter
 # These will use the configured exporters if observability was initialized

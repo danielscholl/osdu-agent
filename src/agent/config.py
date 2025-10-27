@@ -24,7 +24,8 @@ def _get_github_token() -> Optional[str]:
     2. GITHUB_TOKEN environment variable - fallback
 
     Returns:
-        GitHub token if available, None otherwise
+        Optional[str]: GitHub token string if available via CLI or environment variable,
+                      None if no token is configured (agent will use unauthenticated GitHub API)
     """
     # Try GitHub CLI first
     try:
@@ -62,7 +63,8 @@ def _get_gitlab_token() -> Optional[str]:
     2. GITLAB_TOKEN environment variable - fallback
 
     Returns:
-        GitLab token if available, None otherwise
+        Optional[str]: GitLab token string if available via CLI or environment variable,
+                      None if no token is configured (GitLab features will be unavailable)
     """
     # Try GitLab CLI first
     try:
@@ -142,14 +144,14 @@ class AgentConfig:
         default_factory=lambda: Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
     )
 
-    github_token: Optional[str] = field(default_factory=lambda: _get_github_token())
+    github_token: Optional[str] = field(default_factory=_get_github_token)
 
     # GitLab Configuration
     gitlab_url: Optional[str] = field(
         default_factory=lambda: os.getenv("GITLAB_URL", "https://gitlab.com")
     )
 
-    gitlab_token: Optional[str] = field(default_factory=lambda: _get_gitlab_token())
+    gitlab_token: Optional[str] = field(default_factory=_get_gitlab_token)
 
     gitlab_default_group: Optional[str] = field(
         default_factory=lambda: os.getenv("GITLAB_DEFAULT_GROUP")

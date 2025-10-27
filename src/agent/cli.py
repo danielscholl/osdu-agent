@@ -709,7 +709,8 @@ async def _validate_github_connection(config: AgentConfig) -> bool:
     Returns:
         True if GitHub connection works, False otherwise
     """
-    # If no token configured, can't validate (will use unauthenticated API)
+    # If no token is configured, cannot validate connection; returning False means
+    # validation cannot be performed (not that authentication failed)
     if not config.github_token:
         return False
 
@@ -724,9 +725,10 @@ async def _validate_github_connection(config: AgentConfig) -> bool:
         if result.returncode == 0:
             return True
     except (FileNotFoundError, subprocess.TimeoutExpired):
-        # gh CLI not installed, fall back to direct API check
+        # gh CLI not installed or timeout - fall back to direct API check
         pass
     except Exception:
+        # Unexpected error with gh CLI - fall back to direct API check
         pass
 
     # Fall back to direct API validation (if gh not available)
@@ -768,9 +770,10 @@ async def _validate_gitlab_connection(config: AgentConfig) -> bool:
         if result.returncode == 0:
             return True
     except (FileNotFoundError, subprocess.TimeoutExpired):
-        # glab CLI not installed, fall back to direct API check
+        # glab CLI not installed or timeout - fall back to direct API check
         pass
     except Exception:
+        # Unexpected error with glab CLI - fall back to direct API check
         pass
 
     # Fall back to direct API validation (if glab not available)
