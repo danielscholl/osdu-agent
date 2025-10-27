@@ -1,5 +1,6 @@
-"""Configuration management for Copilot CLI wrapper."""
+"""Configuration management for OSDU Agent automation workflows."""
 
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -16,6 +17,20 @@ class CopilotConfig(BaseSettings):
     template_repo: str = "azure/osdu-spi"
     default_branch: str = "main"
     log_directory: Optional[str] = None
+
+    def __init__(self, **kwargs):
+        """Initialize with support for GITHUB_SPI_* variables (preferred over COPILOT_*)."""
+        super().__init__(**kwargs)
+
+        # Override with GITHUB_SPI_* variables if set (takes precedence)
+        if os.getenv("GITHUB_SPI_ORGANIZATION"):
+            self.organization = os.getenv("GITHUB_SPI_ORGANIZATION")
+
+        if os.getenv("GITHUB_SPI_REPO"):
+            self.template_repo = os.getenv("GITHUB_SPI_REPO")
+
+        if os.getenv("GITHUB_SPI_BRANCH"):
+            self.default_branch = os.getenv("GITHUB_SPI_BRANCH")
 
 
 # Load environment variables from .env if it exists

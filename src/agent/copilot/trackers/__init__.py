@@ -1,4 +1,4 @@
-"""Trackers for copilot CLI wrapper."""
+"""Status trackers for OSDU Agent automation workflows."""
 
 from agent.copilot.trackers.depends_tracker import DependsTracker
 from agent.copilot.trackers.service_tracker import ServiceTracker

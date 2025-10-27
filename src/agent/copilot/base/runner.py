@@ -7,7 +7,7 @@ from collections import deque
 from datetime import datetime
 from importlib.resources.abc import Traversable
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Union, Coroutine, Any
+from typing import TYPE_CHECKING, List, Optional, Union
 
 from rich.console import Console
 from rich.layout import Layout
@@ -38,7 +38,7 @@ DEFAULT_VISIBLE_OUTPUT_LINES = 40
 
 
 class BaseRunner(ABC):
-    """Abstract base class for all copilot CLI runners."""
+    """Abstract base class for all OSDU Agent automation workflow runners."""
 
     def __init__(
         self,
@@ -209,93 +209,13 @@ class BaseRunner(ABC):
         """Display run configuration."""
         pass
 
-    def run(self) -> Union[int, Coroutine[Any, Any, int]]:
-        """Execute copilot with streaming output.
-
-        Returns:
-            Process return code
-        """
-        global current_process
-
-        self.show_config()
-
-        prompt_content = self.load_prompt()
-
-        # Use model from environment or default to Claude Sonnet 4.5
-        import os
-
-        model = os.getenv("OSDU_AGENT_COPILOT_MODEL", "claude-sonnet-4.5")
-        command = ["copilot", "--model", model, "-p", prompt_content, "--allow-all-tools"]
-
-        try:
-            # Start process with streaming output
-            process = subprocess.Popen(
-                command,
-                stdin=subprocess.DEVNULL,  # Prevent copilot from waiting for user input
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,  # Merge stderr into stdout to prevent deadlock
-                text=True,
-                bufsize=1,
-                universal_newlines=True,
-            )
-
-            # Set global process for signal handler
-            current_process = process
-
-            # Create split layout
-            layout = self.create_layout()
-
-            # Initialize panels with content before entering Live context
-            if self.tracker:
-                layout["status"].update(self.tracker.get_table())
-
-            # Live display with split view
-            from rich.live import Live
-
-            with Live(layout, console=console, refresh_per_second=4):
-                # Read stdout line by line
-                if process.stdout:
-                    for line in process.stdout:
-                        line = line.rstrip()
-                        if line:
-                            # Add to both buffers
-                            self.output_lines.append(line)
-                            self.full_output.append(line)
-
-                            # Parse for status updates
-                            self.parse_output(line)
-
-                            # Update both panels
-                            if self.tracker:
-                                layout["status"].update(self.tracker.get_table())
-                            layout["output"].update(self._output_panel_renderable)
-
-                # Wait for process to complete
-                process.wait()
-
-            # Post-processing happens outside Live context
-            console.print()  # Add spacing
-
-            # Print the final results panel
-            console.print(self.get_results_panel(process.returncode))
-
-            # Save full output to log file
-            self._save_log(process.returncode)
-
-            return process.returncode
-
-        except FileNotFoundError:
-            console.print(
-                "[red]Error:[/red] 'copilot' command not found. Is GitHub Copilot CLI installed?",
-                style="bold red",
-            )
-            return 1
-        except Exception as e:
-            console.print(f"[red]Error executing command:[/red] {e}", style="bold red")
-            return 1
-        finally:
-            # Clear global process reference
-            current_process = None
+    # Note: run() method intentionally not implemented in base class
+    # Each runner implements its own run() or run_direct() method:
+    # - VulnsRunner.run() - Uses Agent with Azure OpenAI
+    # - DependsRunner.run() - Uses Agent with Azure OpenAI
+    # - DirectTestRunner.run() - Direct Maven execution
+    # - CopilotRunner.run_direct() - Direct GitHub API
+    # - StatusRunner.run_direct() - Direct GitHub/GitLab API
 
     def _save_log(self, return_code: int):
         """Save execution log to file.
@@ -310,7 +230,7 @@ class BaseRunner(ABC):
         try:
             with open(self.log_file, "w") as f:
                 f.write(f"{'='*70}\n")
-                f.write(f"Copilot {self.log_prefix.title()} Execution Log\n")
+                f.write(f"OSDU Agent {self.log_prefix.title()} Execution Log\n")
                 f.write(f"{'='*70}\n")
                 f.write(f"Timestamp: {datetime.now().isoformat()}\n")
                 f.write(f"Services: {', '.join(self.services)}\n")

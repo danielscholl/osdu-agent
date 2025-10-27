@@ -309,9 +309,9 @@ def test_find_dependency_versions_grouping(fs_tools, temp_repos_dir):
     # File paths should be shown under their service
     lines = result.split("\n")
     service_indices = {
-        "partition": next(i for i, l in enumerate(lines) if "Service: partition" in l),
-        "legal": next(i for i, l in enumerate(lines) if "Service: legal" in l),
-        "file": next(i for i, l in enumerate(lines) if "Service: file" in l),
+        "partition": next(i for i, line in enumerate(lines) if "Service: partition" in line),
+        "legal": next(i for i, line in enumerate(lines) if "Service: legal" in line),
+        "file": next(i for i, line in enumerate(lines) if "Service: file" in line),
     }
 
     # Verify services are sorted alphabetically (file < legal < partition)

@@ -1,6 +1,8 @@
 """Configuration management for OSDU Agent."""
 
+import logging
 import os
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Literal, Optional
@@ -9,6 +11,96 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+
+def _get_github_token() -> Optional[str]:
+    """
+    Get GitHub token from CLI or environment variable.
+
+    Priority:
+    1. GitHub CLI (`gh auth token`) - if installed and authenticated
+    2. GITHUB_TOKEN environment variable - fallback
+
+    Returns:
+        Optional[str]: GitHub token string if available via CLI or environment variable,
+                      None if no token is configured (agent will use unauthenticated GitHub API)
+    """
+    # Try GitHub CLI first
+    try:
+        result = subprocess.run(
+            ["gh", "auth", "token"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0 and result.stdout and result.stdout.strip():
+            gh_token = result.stdout.strip()
+            logger.debug("Using GitHub token from gh CLI")
+            return gh_token
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        # gh CLI not installed or timeout
+        pass
+    except Exception as e:
+        logger.debug(f"Failed to get token from gh CLI: {e}")
+
+    # Fall back to environment variable
+    env_token: Optional[str] = os.getenv("GITHUB_TOKEN")
+    if env_token:
+        logger.debug("Using GitHub token from GITHUB_TOKEN env var")
+    else:
+        logger.debug("No GitHub token configured (will use unauthenticated API)")
+    return env_token
+
+
+def _get_gitlab_token() -> Optional[str]:
+    """
+    Get GitLab token from CLI or environment variable.
+
+    Priority:
+    1. GitLab CLI (`glab auth status --show-token`) - if installed and authenticated
+    2. GITLAB_TOKEN environment variable - fallback
+
+    Returns:
+        Optional[str]: GitLab token string if available via CLI or environment variable,
+                      None if no token is configured (GitLab features will be unavailable)
+    """
+    # Try GitLab CLI first
+    try:
+        result = subprocess.run(
+            ["glab", "auth", "status", "--show-token"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            # glab writes to stderr (not stdout!)
+            # Output format: "  ✓ Token found: glpat-xxxxxxxxxxxxx"
+            output = result.stderr.strip()
+
+            # Look for "Token found: " line
+            for line in output.split("\n"):
+                if "Token found:" in line:
+                    # Extract token after "Token found: "
+                    token = line.split("Token found:")[-1].strip()
+                    if token and len(token) > 10:  # Sanity check
+                        logger.debug("Using GitLab token from glab CLI")
+                        return token
+
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        # glab CLI not installed or timeout
+        pass
+    except Exception as e:
+        logger.debug(f"Failed to get token from glab CLI: {e}")
+
+    # Fall back to environment variable
+    env_token: Optional[str] = os.getenv("GITLAB_TOKEN")
+    if env_token:
+        logger.debug("Using GitLab token from GITLAB_TOKEN env var")
+    else:
+        logger.debug("No GitLab token configured")
+    return env_token
 
 
 @dataclass
@@ -33,7 +125,13 @@ class AgentConfig:
         hosted_tools_mode: How to integrate hosted tools ('complement', 'replace', 'fallback')
     """
 
-    organization: str = field(default_factory=lambda: os.getenv("OSDU_AGENT_ORGANIZATION", "azure"))
+    organization: str = field(
+        default_factory=lambda: (
+            os.getenv("GITHUB_SPI_ORGANIZATION")
+            or os.getenv("OSDU_AGENT_ORGANIZATION")
+            or "azure"  # Final default
+        )
+    )
 
     repositories: List[str] = field(
         default_factory=lambda: os.getenv(
@@ -46,14 +144,14 @@ class AgentConfig:
         default_factory=lambda: Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
     )
 
-    github_token: Optional[str] = field(default_factory=lambda: os.getenv("GITHUB_TOKEN"))
+    github_token: Optional[str] = field(default_factory=_get_github_token)
 
     # GitLab Configuration
     gitlab_url: Optional[str] = field(
         default_factory=lambda: os.getenv("GITLAB_URL", "https://gitlab.com")
     )
 
-    gitlab_token: Optional[str] = field(default_factory=lambda: os.getenv("GITLAB_TOKEN"))
+    gitlab_token: Optional[str] = field(default_factory=_get_gitlab_token)
 
     gitlab_default_group: Optional[str] = field(
         default_factory=lambda: os.getenv("GITLAB_DEFAULT_GROUP")

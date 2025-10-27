@@ -1,4 +1,4 @@
-"""Runners for copilot CLI wrapper."""
+"""Workflow runners for OSDU Agent automation."""
 
 from agent.copilot.runners.copilot_runner import CopilotRunner
 from agent.copilot.runners.depends_runner import DependsRunner

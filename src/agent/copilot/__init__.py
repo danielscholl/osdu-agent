@@ -9,13 +9,16 @@
 # ]
 # ///
 """
-Enhanced Copilot CLI Wrapper with Rich Console Output
+OSDU Agent Automation Workflows
+
+Provides automated workflows for repository management, dependency analysis,
+vulnerability scanning, and testing across OSDU services.
 
 Usage:
-    osdu fork --services partition,legal --branch main
-    osdu fork --services all
-    osdu fork --services partition
-    osdu status --services partition
+    osdu fork --service partition,legal --branch main
+    osdu status --service partition
+    osdu vulns --service partition
+    osdu depends --service partition
 """
 
 import argparse

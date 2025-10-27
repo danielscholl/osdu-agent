@@ -239,6 +239,8 @@ async def workflow_context_agent_middleware(
     This enables the agent to reference detailed workflow results when
     answering follow-up questions.
 
+    Also injects user/session observability attributes into the current span.
+
     Args:
         context: Agent run context containing messages, agent, and metadata
         next: Next middleware or the actual agent execution
@@ -248,6 +250,9 @@ async def workflow_context_agent_middleware(
         The middleware injects vulns results before agent execution, allowing
         the agent to answer with specific CVE details.
     """
+    # Note: User/session attributes are automatically injected by UserSessionSpanProcessor
+    # (see observability.py) when spans are created, so we don't need to do it here.
+
     # Import here to avoid circular dependency
     from agent.workflows import get_result_store
 

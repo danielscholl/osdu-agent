@@ -132,7 +132,7 @@ def test_agent_has_required_tools():
         call_kwargs = mock_chat_agent.call_args[1]
 
         assert call_kwargs["tools"] == github_tools + fs_tools + git_tools + gitlab_tools
-        assert call_kwargs["name"] == "SPI GitHub Issues Agent"
+        assert call_kwargs["name"] == "OSDU Agent"
 
 
 def test_agent_with_mcp_tools():

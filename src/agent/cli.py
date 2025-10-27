@@ -709,15 +709,40 @@ async def _validate_github_connection(config: AgentConfig) -> bool:
     Returns:
         True if GitHub connection works, False otherwise
     """
-    import subprocess
+    # If no token is configured, cannot validate connection; returning False means
+    # validation cannot be performed (not that authentication failed)
+    if not config.github_token:
+        return False
 
     try:
-        # Use gh auth status to check if we're authenticated
+        import subprocess
+
+        # Try gh auth status first (faster than API call)
         result = await asyncio.to_thread(
             subprocess.run, ["gh", "auth", "status"], capture_output=True, timeout=5
         )
         # gh auth status returns 0 if authenticated
-        return result.returncode == 0
+        if result.returncode == 0:
+            return True
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        # gh CLI not installed or timeout - fall back to direct API check
+        pass
+    except Exception:
+        # Unexpected error with gh CLI - fall back to direct API check
+        pass
+
+    # Fall back to direct API validation (if gh not available)
+    try:
+        import aiohttp
+
+        url = "https://api.github.com/user"
+        headers = {"Authorization": f"Bearer {config.github_token}"}
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url, headers=headers, timeout=aiohttp.ClientTimeout(total=5)
+            ) as response:
+                return response.status == 200
     except Exception:
         return False
 
@@ -734,6 +759,24 @@ async def _validate_gitlab_connection(config: AgentConfig) -> bool:
     if not config.gitlab_token:
         return False
 
+    try:
+        import subprocess
+
+        # Try glab auth status first (faster than API call)
+        result = await asyncio.to_thread(
+            subprocess.run, ["glab", "auth", "status"], capture_output=True, timeout=5
+        )
+        # glab auth status returns 0 if authenticated
+        if result.returncode == 0:
+            return True
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        # glab CLI not installed or timeout - fall back to direct API check
+        pass
+    except Exception:
+        # Unexpected error with glab CLI - fall back to direct API check
+        pass
+
+    # Fall back to direct API validation (if glab not available)
     try:
         import aiohttp
 
@@ -865,6 +908,53 @@ def format_auto_detection_message(services: List[str], config: Optional[AgentCon
     return f"Auto-detected {count} {service_word}: {service_list}"
 
 
+async def _setup_foundry_observability_if_needed() -> None:
+    """
+    Set up Azure AI Foundry observability if configured.
+
+    This automatically fetches the Application Insights connection string from
+    the Azure AI Foundry project, so users don't need to configure it manually.
+
+    Requires:
+        - AZURE_AI_PROJECT_ENDPOINT environment variable
+        - Azure authentication (az login)
+        - No APPLICATIONINSIGHTS_CONNECTION_STRING (to avoid duplication)
+    """
+    import os
+
+    # Only use Foundry auto-discovery if no connection string is set
+    if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+        return  # Already configured via env var
+
+    if not os.getenv("AZURE_AI_PROJECT_ENDPOINT"):
+        return  # No Foundry endpoint configured
+
+    try:
+        from agent.observability import setup_azure_ai_foundry_observability
+
+        result = await setup_azure_ai_foundry_observability()
+        if result:
+            # Install user/session span processor after Foundry setup
+            from agent.observability import UserSessionSpanProcessor
+            from opentelemetry import trace
+            from opentelemetry.sdk.trace import TracerProvider
+
+            tracer_provider = trace.get_tracer_provider()
+            if isinstance(tracer_provider, TracerProvider):
+                processor = UserSessionSpanProcessor()
+                tracer_provider.add_span_processor(processor)  # type: ignore[arg-type]
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.info("  User/session span processor installed")
+
+    except Exception as e:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Azure AI Foundry observability setup skipped: {e}")
+
+
 async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
     """Run interactive chat mode.
 
@@ -872,13 +962,40 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
         quiet: Suppress status display
         verbose: Show verbose execution tree with all phases
     """
+    import uuid
+    import getpass
+    import os as _os
+
     config = AgentConfig()
+
+    # Set up Azure AI Foundry observability if configured (auto-fetches App Insights connection string)
+    await _setup_foundry_observability_if_needed()
 
     # Set execution context for interactive mode
     from agent.display import ExecutionContext, set_execution_context
 
     execution_context = ExecutionContext(is_interactive=True, show_visualization=not quiet)
     set_execution_context(execution_context)
+
+    # Set user and session context for observability
+    from agent.observability import set_user_context, set_session_context, set_custom_attributes
+
+    # Get current user from environment
+    try:
+        user_id = getpass.getuser()
+    except Exception:
+        user_id = _os.getenv("USER") or _os.getenv("USERNAME") or "unknown"
+
+    # Generate session ID for this chat session
+    session_id = str(uuid.uuid4())
+
+    # Set observability context (will be attached to all traces in this session)
+    set_user_context(user_id=user_id)
+    set_session_context(session_id=session_id)
+    set_custom_attributes(
+        mode="interactive",
+        organization=config.organization,
+    )
 
     # Initialize Maven MCP if enabled
     maven_mcp = MavenMCPManager(config)
@@ -1140,6 +1257,13 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
         quiet: Suppress output headers
         verbose: Show detailed execution tree with tool calls
     """
+    import uuid
+    import getpass
+    import os as _os
+
+    # Set up Azure AI Foundry observability if configured (auto-fetches App Insights connection string)
+    await _setup_foundry_observability_if_needed()
+
     # CRITICAL: Set execution context FIRST, before any agent initialization
     # This ensures EventEmitter has interactive mode set when Agent initializes
     if verbose:
@@ -1155,6 +1279,26 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
 
     # Now safe to create agent (will see interactive mode if verbose=True)
     config = AgentConfig()
+
+    # Set user and session context for observability
+    from agent.observability import set_user_context, set_session_context, set_custom_attributes
+
+    # Get current user from environment
+    try:
+        user_id = getpass.getuser()
+    except Exception:
+        user_id = _os.getenv("USER") or _os.getenv("USERNAME") or "unknown"
+
+    # Generate unique session ID for this single query
+    session_id = str(uuid.uuid4())
+
+    # Set observability context (will be attached to all traces)
+    set_user_context(user_id=user_id)
+    set_session_context(session_id=session_id)
+    set_custom_attributes(
+        mode="single_query",
+        organization=config.organization,
+    )
 
     # Initialize Maven MCP if enabled
     maven_mcp = MavenMCPManager(config)
