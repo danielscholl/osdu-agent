@@ -5,6 +5,13 @@
       "package-name": "osdu-agent",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name=='osdu-agent')].version"
+        }
+      ],
       "changelog-sections": [
         {
           "type": "feat",
