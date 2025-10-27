@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.4...osdu-agent-v0.1.5) (2025-10-27)
+
+
+### Bug Fixes
+
+* resolve 17 CodeQL security and code quality issues ([#14](https://github.com/danielscholl/osdu-agent/issues/14)) ([77c677e](https://github.com/danielscholl/osdu-agent/commit/77c677e4d7023ec5a17238966ce098afc0b64440))
+* resolve 5 remaining CodeQL issues and suppress 9 false positives ([#16](https://github.com/danielscholl/osdu-agent/issues/16)) ([71818c4](https://github.com/danielscholl/osdu-agent/commit/71818c4fb9b07ce03993fe749681e425fceca3b1))
+
 ## [0.1.4](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.3...osdu-agent-v0.1.4) (2025-10-27)
 
 
