@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.3...osdu-agent-v0.1.4) (2025-10-27)
+
+
+### Features
+
+* **observability:** complete Application Insights integration with CLI auth ([#12](https://github.com/danielscholl/osdu-agent/issues/12)) ([123cf66](https://github.com/danielscholl/osdu-agent/commit/123cf66e06698aed97d92c7f4ae9471ec238ccf7))
+
 ## [0.1.3](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.2...osdu-agent-v0.1.3) (2025-10-27)
 
 
