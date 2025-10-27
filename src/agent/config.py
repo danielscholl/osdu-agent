@@ -166,7 +166,7 @@ class AgentConfig:
     azure_openai_api_version: str = field(
         default_factory=lambda: os.getenv("AZURE_OPENAI_API_VERSION")
         or os.getenv("AZURE_OPENAI_VERSION")
-        or "2024-12-01-preview"
+        or "2025-03-01-preview"
     )
 
     azure_openai_api_key: Optional[str] = field(

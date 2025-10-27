@@ -231,3 +231,19 @@ def test_azure_openai_deployment_from_env():
     ):
         config = AgentConfig()
         assert config.azure_openai_deployment == "custom-deployment"
+
+
+def test_azure_openai_api_version_default():
+    """Test that the default Azure OpenAI API version matches .env.example."""
+    with patch.dict(os.environ, {}, clear=True):
+        config = AgentConfig()
+        assert config.azure_openai_api_version == "2025-03-01-preview"
+
+
+def test_azure_openai_api_version_from_env():
+    """Test that Azure OpenAI API version can be overridden via environment variable."""
+    with patch.dict(
+        os.environ, {"AZURE_OPENAI_API_VERSION": "2024-10-01-preview"}, clear=True
+    ):
+        config = AgentConfig()
+        assert config.azure_openai_api_version == "2024-10-01-preview"
