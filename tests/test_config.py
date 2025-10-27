@@ -215,3 +215,19 @@ ERROR: could not authenticate to one or more instances
             # Token should still be extracted despite returncode == 1
             assert token == "glpat_multi_instance_token"
             mock_run.assert_called_once()
+
+
+def test_azure_openai_deployment_default():
+    """Test that the default Azure OpenAI deployment is gpt-5-mini."""
+    with patch.dict(os.environ, {}, clear=True):
+        config = AgentConfig()
+        assert config.azure_openai_deployment == "gpt-5-mini"
+
+
+def test_azure_openai_deployment_from_env():
+    """Test that Azure OpenAI deployment can be overridden via environment variable."""
+    with patch.dict(
+        os.environ, {"AZURE_OPENAI_DEPLOYMENT_NAME": "custom-deployment"}, clear=True
+    ):
+        config = AgentConfig()
+        assert config.azure_openai_deployment == "custom-deployment"

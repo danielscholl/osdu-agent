@@ -160,7 +160,7 @@ class AgentConfig:
     )
 
     azure_openai_deployment: str = field(
-        default_factory=lambda: os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4")
+        default_factory=lambda: os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-5-mini")
     )
 
     azure_openai_api_version: str = field(
