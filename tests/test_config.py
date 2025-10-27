@@ -185,3 +185,33 @@ def test_gitlab_token_from_env_var():
             token = _get_gitlab_token()
 
             assert token == "glpat_env_token"
+
+
+def test_gitlab_token_multi_instance_with_failure():
+    """Test GitLab token detection with multiple instances where one fails (exit code 1)."""
+    from unittest.mock import MagicMock
+    from agent.config import _get_gitlab_token
+
+    with patch("agent.config.subprocess.run") as mock_run:
+        with patch.dict(os.environ, {}, clear=True):
+            # Mock glab auth status with multi-instance output
+            # Exit code 1 because one instance failed, but another has a valid token
+            mock_result = MagicMock()
+            mock_result.returncode = 1
+            mock_result.stderr = """gitlab.com
+  x API call failed: 401 Unauthorized
+  ! No token found
+community.opengroup.org
+  ✓ Logged in as danielscholl
+  ✓ Token found: glpat_multi_instance_token
+
+ERROR: could not authenticate to one or more instances
+"""
+            mock_result.stdout = ""
+            mock_run.return_value = mock_result
+
+            token = _get_gitlab_token()
+
+            # Token should still be extracted despite returncode == 1
+            assert token == "glpat_multi_instance_token"
+            mock_run.assert_called_once()

@@ -74,13 +74,11 @@ def _get_gitlab_token() -> Optional[str]:
             text=True,
             timeout=5,
         )
-        if result.returncode == 0:
-            # glab writes to stderr (not stdout!)
-            # Output format: "  ✓ Token found: glpat-xxxxxxxxxxxxx"
-            output = result.stderr.strip()
-
-            # Look for "Token found: " line
-            for line in output.split("\n"):
+        # Parse output even if returncode != 0 (handles multi-instance failures)
+        # glab writes to stderr (not stdout!)
+        # Output format: "  ✓ Token found: glpat-xxxxxxxxxxxxx"
+        if result.stderr:
+            for line in result.stderr.split("\n"):
                 if "Token found:" in line:
                     # Extract token after "Token found: "
                     token = line.split("Token found:")[-1].strip()
