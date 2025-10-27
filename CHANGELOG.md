@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.5...osdu-agent-v0.1.6) (2025-10-27)
+
+
+### Bug Fixes
+
+* **config:** Parse GitLab token from glab output regardless of exit code ([#18](https://github.com/danielscholl/osdu-agent/issues/18)) ([1667d7a](https://github.com/danielscholl/osdu-agent/commit/1667d7a507d8e1df4c7a757e6e54f7506cebceb1))
+
 ## [0.1.5](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.4...osdu-agent-v0.1.5) (2025-10-27)
 
 
