@@ -33,7 +33,7 @@ class QuietMCPStdioTool(MCPStdioTool):
 
         Args:
             *args: Positional arguments for MCPStdioTool
-            stderr_log_path: Path to redirect stderr output (default: logs/maven_mcp_TIMESTAMP.log if logging enabled, /dev/null otherwise)
+            stderr_log_path: Path to redirect stderr output (default: logs/maven_mcp_TIMESTAMP.log if logging enabled, os.devnull otherwise)
             **kwargs: Keyword arguments for MCPStdioTool
         """
         super().__init__(*args, **kwargs)
@@ -44,9 +44,14 @@ class QuietMCPStdioTool(MCPStdioTool):
                 # Logging enabled - redirect to timestamped log file
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 stderr_log_path = log_dir / f"maven_mcp_{timestamp}.log"
+                self._is_null_device = False
             else:
-                # Logging disabled - redirect to /dev/null
-                stderr_log_path = Path("/dev/null")
+                # Logging disabled - redirect to platform null device
+                stderr_log_path = Path(os.devnull)
+                self._is_null_device = True
+        else:
+            # Check if explicitly set to null device
+            self._is_null_device = str(stderr_log_path) == os.devnull
 
         self._stderr_log_path = stderr_log_path
         self._stderr_file = None
@@ -58,8 +63,8 @@ class QuietMCPStdioTool(MCPStdioTool):
             if self._stderr_log_path is not None:
                 self._stderr_file = open(self._stderr_log_path, "w", buffering=1)
 
-                # Write headers only if not /dev/null
-                if str(self._stderr_log_path) != "/dev/null":
+                # Write headers only if not redirecting to null device
+                if not self._is_null_device:
                     self._stderr_file.write(
                         f"Maven MCP Server Log - {datetime.now().isoformat()}\n"
                     )
@@ -100,8 +105,8 @@ class QuietMCPStdioTool(MCPStdioTool):
 
         # Close stderr redirection file
         if self._stderr_file and not self._stderr_file.closed:
-            # Write shutdown message only if not /dev/null
-            if str(self._stderr_log_path) != "/dev/null":
+            # Write shutdown message only if not redirecting to null device
+            if not self._is_null_device:
                 self._stderr_file.write(f"\n\nServer shutdown - {datetime.now().isoformat()}\n")
             self._stderr_file.close()
 
