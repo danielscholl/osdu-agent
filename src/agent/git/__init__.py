@@ -1,12 +1,9 @@
 """Git repository management tools package."""
 
-import logging
 from typing import List
 
 from agent.config import AgentConfig
 from agent.git.tools import GitRepositoryTools
-
-logger = logging.getLogger(__name__)
 
 
 def create_git_tools(config: AgentConfig) -> List:

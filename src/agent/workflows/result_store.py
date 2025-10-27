@@ -200,8 +200,6 @@ class WorkflowResultStore:
                     open_prs = status.get("open_prs", 0)
                     open_issues = status.get("open_issues", 0)
                     workflows_needing_approval = status.get("workflows_needing_approval", 0)
-                    pr_details = status.get("pr_details", [])
-                    issue_details = status.get("issue_details", [])
 
                     status_line = f"- {svc}: {open_prs} open PRs, {open_issues} open issues"
                     if workflows_needing_approval > 0:

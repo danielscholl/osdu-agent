@@ -3,6 +3,7 @@
 from typing import Any, List
 
 from agent.config import AgentConfig
+from agent.gitlab.base import GitLabToolsBase
 
 # Will be populated with specialized tool classes
 __all__ = [

@@ -365,7 +365,6 @@ class CopilotRunner(BaseRunner):
 
             # Determine status display and color
             status_display = ""
-            status_style = "white"
 
             if status == "success":
                 status_display = "✓ Initialized"

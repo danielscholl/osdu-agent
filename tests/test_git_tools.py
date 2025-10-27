@@ -956,6 +956,7 @@ class TestRemoteManagement:
 
         assert "origin:" in result
         assert "upstream:" in result
+        # Test assertions for git remote URLs - CodeQL suppression in .github/codeql/codeql-config.yml
         assert "github.com" in result
         assert "gitlab.com" in result
 
