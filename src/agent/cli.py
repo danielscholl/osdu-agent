@@ -751,36 +751,30 @@ async def _validate_gitlab_connection(config: AgentConfig) -> bool:
         return False
 
 
-async def _count_existing_repos(config: AgentConfig) -> int:
-    """Count how many configured repositories actually exist in GitHub.
+async def _count_local_repos(config: AgentConfig) -> int:
+    """Count how many configured repositories exist locally.
 
     Args:
         config: Agent configuration with organization and repositories
 
     Returns:
-        Number of repositories that exist
+        Number of repositories that exist in repos_root directory
     """
-    from agent.github.direct_client import GitHubDirectClient
+    repos_dir = config.repos_root
 
-    client = GitHubDirectClient(config)
+    # Check if repos directory exists
+    if not repos_dir.exists() or not repos_dir.is_dir():
+        return 0
 
-    # Check all repos in parallel
-    async def check_repo(service: str) -> bool:
-        """Check if a single repo exists."""
-        repo_name = config.get_repo_full_name(service)
-        try:
-            repo_info = await client._get_repo_info(repo_name)
-            return bool(repo_info.get("exists", False))
-        except Exception:
-            return False
-
-    # Check all repos concurrently
-    results = await asyncio.gather(
-        *[check_repo(service) for service in config.repositories], return_exceptions=True
-    )
-
-    # Count successful checks (True values, not exceptions)
-    return sum(1 for r in results if r is True)
+    # Count local service directories
+    try:
+        local_count = sum(
+            1 for item in repos_dir.iterdir() if item.is_dir() and item.name in config.repositories
+        )
+        return local_count
+    except (OSError, PermissionError):
+        # Handle permission errors or other file system issues gracefully
+        return 0
 
 
 async def detect_available_services(config: AgentConfig) -> List[str]:
@@ -892,18 +886,18 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
         agent = Agent(config, mcp_tools=maven_mcp.tools)
 
         if not quiet:
-            # Validate connections and count existing repositories (run in parallel)
-            github_connected, gitlab_connected, existing_count = await asyncio.gather(
+            # Validate connections and count local repositories (run in parallel)
+            github_connected, gitlab_connected, local_count = await asyncio.gather(
                 _validate_github_connection(config),
                 _validate_gitlab_connection(config),
-                _count_existing_repos(config),
+                _count_local_repos(config),
             )
             total_count = len(config.repositories)
 
             # Render full startup banner with connection status
             _render_full_startup_banner(
                 config=config,
-                existing_repos=existing_count,
+                existing_repos=local_count,
                 total_repos=total_count,
                 maven_mcp_available=maven_mcp.is_available,
                 maven_mcp_version="2.3.0",
