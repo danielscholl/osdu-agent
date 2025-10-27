@@ -34,10 +34,10 @@ def _get_github_token() -> Optional[str]:
             text=True,
             timeout=5,
         )
-        if result.returncode == 0 and result.stdout.strip():
-            token = result.stdout.strip()
+        if result.returncode == 0 and result.stdout and result.stdout.strip():
+            gh_token = result.stdout.strip()
             logger.debug("Using GitHub token from gh CLI")
-            return token
+            return gh_token
     except (FileNotFoundError, subprocess.TimeoutExpired):
         # gh CLI not installed or timeout
         pass
@@ -45,12 +45,12 @@ def _get_github_token() -> Optional[str]:
         logger.debug(f"Failed to get token from gh CLI: {e}")
 
     # Fall back to environment variable
-    token = os.getenv("GITHUB_TOKEN")
-    if token:
+    env_token: Optional[str] = os.getenv("GITHUB_TOKEN")
+    if env_token:
         logger.debug("Using GitHub token from GITHUB_TOKEN env var")
     else:
         logger.debug("No GitHub token configured (will use unauthenticated API)")
-    return token
+    return env_token
 
 
 def _get_gitlab_token() -> Optional[str]:
@@ -93,12 +93,12 @@ def _get_gitlab_token() -> Optional[str]:
         logger.debug(f"Failed to get token from glab CLI: {e}")
 
     # Fall back to environment variable
-    token = os.getenv("GITLAB_TOKEN")
-    if token:
+    env_token: Optional[str] = os.getenv("GITLAB_TOKEN")
+    if env_token:
         logger.debug("Using GitLab token from GITLAB_TOKEN env var")
     else:
         logger.debug("No GitLab token configured")
-    return token
+    return env_token
 
 
 @dataclass
@@ -124,8 +124,11 @@ class AgentConfig:
     """
 
     organization: str = field(
-        default_factory=lambda: os.getenv("GITHUB_SPI_ORGANIZATION")
-        or os.getenv("OSDU_AGENT_ORGANIZATION", "azure")  # Backwards compatibility
+        default_factory=lambda: (
+            os.getenv("GITHUB_SPI_ORGANIZATION")
+            or os.getenv("OSDU_AGENT_ORGANIZATION")
+            or "azure"  # Final default
+        )
     )
 
     repositories: List[str] = field(

@@ -1,8 +1,6 @@
 """Tests for DirectTestRunner class."""
 
-import xml.etree.ElementTree as ET
-from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -264,9 +262,7 @@ class TestDirectTestRunner:
         """Test Maven command exception handling."""
         runner = DirectTestRunner(["partition"])
 
-        with patch(
-            "asyncio.create_subprocess_exec", side_effect=Exception("Test exception")
-        ):
+        with patch("asyncio.create_subprocess_exec", side_effect=Exception("Test exception")):
             return_code, output = await runner._run_maven_command(
                 ["mvn", "test"], tmp_path, "partition", "test"
             )

@@ -37,7 +37,7 @@ async def test_mcp_array_parameter_type_mapping():
 
     # The field should be of type list
     field_info = fields["items"]
-    assert field_info.annotation == list
+    assert field_info.annotation is list
 
     print("✓ Array parameter correctly mapped to Python list type")
     print(f"  Field annotation: {field_info.annotation}")

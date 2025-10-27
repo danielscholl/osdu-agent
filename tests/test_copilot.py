@@ -1,8 +1,5 @@
 """Tests for copilot module (TestRunner, TestTracker, TriageRunner, TriageTracker)."""
 
-from pathlib import Path
-from unittest.mock import Mock, patch
-
 import pytest
 
 from agent.copilot import SERVICES, TestTracker, parse_services
@@ -222,9 +219,7 @@ class TestCopilotRunner:
         Bug: Previously, "indexer" would match within "indexer-queue" due to substring matching,
         causing the wrong service to be marked as complete.
         """
-        runner = CopilotRunner(
-            ["partition", "indexer", "indexer-queue", "search"], branch="main"
-        )
+        runner = CopilotRunner(["partition", "indexer", "indexer-queue", "search"], branch="main")
 
         # Initially all services are pending
         assert runner.tracker.services["indexer"]["status"] == "pending"
@@ -304,4 +299,3 @@ class TestCopilotRunner:
 
         # indexer should not be affected
         assert runner.tracker.services["indexer"]["status"] == "pending"
-

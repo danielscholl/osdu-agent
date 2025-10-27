@@ -1,4 +1,4 @@
-"""Configuration management for Copilot CLI wrapper."""
+"""Configuration management for OSDU Agent automation workflows."""
 
 import os
 from pathlib import Path

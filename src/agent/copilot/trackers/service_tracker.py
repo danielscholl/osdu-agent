@@ -1,4 +1,4 @@
-"""Service status tracker for copilot CLI wrapper."""
+"""Service status tracker for OSDU Agent automation workflows."""
 
 from typing import Any, Dict, List
 

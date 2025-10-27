@@ -17,8 +17,11 @@ class TestDetectAvailableServices:
         """Test that empty list is returned when repos directory doesn't exist."""
         # Change to temp directory where repos/ doesn't exist
         monkeypatch.chdir(tmp_path)
+        # Clear env var so config doesn't use default repo list
+        monkeypatch.delenv("OSDU_AGENT_REPOSITORIES", raising=False)
 
-        config = AgentConfig()
+        # Use dummy repo list (config requires non-empty list)
+        config = AgentConfig(repositories=["nonexistent"])
         result = await detect_available_services(config)
 
         assert result == []
@@ -30,8 +33,11 @@ class TestDetectAvailableServices:
         repos_dir = tmp_path / "repos"
         repos_dir.mkdir()
         monkeypatch.chdir(tmp_path)
+        # Clear env var so config doesn't use default repo list
+        monkeypatch.delenv("OSDU_AGENT_REPOSITORIES", raising=False)
 
-        config = AgentConfig()
+        # Use dummy repo list (config requires non-empty list)
+        config = AgentConfig(repositories=["nonexistent"])
         result = await detect_available_services(config)
 
         assert result == []
@@ -45,6 +51,8 @@ class TestDetectAvailableServices:
         (repos_dir / "partition").mkdir()
         (repos_dir / "legal").mkdir()
         monkeypatch.chdir(tmp_path)
+        # Clear env var so config doesn't use default repo list
+        monkeypatch.delenv("OSDU_AGENT_REPOSITORIES", raising=False)
 
         # Mock GitHub client to return exists=True for these services
         with patch("agent.github.direct_client.GitHubDirectClient") as mock_client_class:
@@ -52,7 +60,7 @@ class TestDetectAvailableServices:
             mock_client_class.return_value = mock_client
             mock_client._get_repo_info = AsyncMock(return_value={"exists": True})
 
-            config = AgentConfig()
+            config = AgentConfig(repositories=["partition", "legal"])
             result = await detect_available_services(config)
 
             assert set(result) == {"legal", "partition"}
@@ -68,6 +76,8 @@ class TestDetectAvailableServices:
         (repos_dir / "legal").mkdir()
         (repos_dir / "schema").mkdir()
         monkeypatch.chdir(tmp_path)
+        # Clear env var so config doesn't use default repo list
+        monkeypatch.delenv("OSDU_AGENT_REPOSITORIES", raising=False)
 
         # Mock GitHub client to return exists=True only for partition and legal
         with patch("agent.github.direct_client.GitHubDirectClient") as mock_client_class:
@@ -82,7 +92,7 @@ class TestDetectAvailableServices:
 
             mock_client._get_repo_info = AsyncMock(side_effect=mock_get_repo_info)
 
-            config = AgentConfig()
+            config = AgentConfig(repositories=["partition", "legal", "schema"])
             result = await detect_available_services(config)
 
             assert set(result) == {"legal", "partition"}
@@ -97,6 +107,8 @@ class TestDetectAvailableServices:
         (repos_dir / "random_dir").mkdir()  # Not a configured service
         (repos_dir / ".git").mkdir()  # Hidden directory
         monkeypatch.chdir(tmp_path)
+        # Clear env var so config doesn't use default repo list
+        monkeypatch.delenv("OSDU_AGENT_REPOSITORIES", raising=False)
 
         # Mock GitHub client
         with patch("agent.github.direct_client.GitHubDirectClient") as mock_client_class:
@@ -104,7 +116,7 @@ class TestDetectAvailableServices:
             mock_client_class.return_value = mock_client
             mock_client._get_repo_info = AsyncMock(return_value={"exists": True})
 
-            config = AgentConfig()
+            config = AgentConfig(repositories=["partition"])
             result = await detect_available_services(config)
 
             # Only partition should be returned (random_dir is not in config.repositories)
@@ -119,6 +131,8 @@ class TestDetectAvailableServices:
         (repos_dir / "partition").mkdir()
         (repos_dir / "README.md").touch()  # File, not directory
         monkeypatch.chdir(tmp_path)
+        # Clear env var so config doesn't use default repo list
+        monkeypatch.delenv("OSDU_AGENT_REPOSITORIES", raising=False)
 
         # Mock GitHub client
         with patch("agent.github.direct_client.GitHubDirectClient") as mock_client_class:
@@ -126,7 +140,7 @@ class TestDetectAvailableServices:
             mock_client_class.return_value = mock_client
             mock_client._get_repo_info = AsyncMock(return_value={"exists": True})
 
-            config = AgentConfig()
+            config = AgentConfig(repositories=["partition"])
             result = await detect_available_services(config)
 
             assert result == ["partition"]
@@ -140,6 +154,8 @@ class TestDetectAvailableServices:
         (repos_dir / "partition").mkdir()
         (repos_dir / "legal").mkdir()
         monkeypatch.chdir(tmp_path)
+        # Clear env var so config doesn't use default repo list
+        monkeypatch.delenv("OSDU_AGENT_REPOSITORIES", raising=False)
 
         # Mock GitHub client to raise exception for legal, succeed for partition
         with patch("agent.github.direct_client.GitHubDirectClient") as mock_client_class:
@@ -153,7 +169,7 @@ class TestDetectAvailableServices:
 
             mock_client._get_repo_info = AsyncMock(side_effect=mock_get_repo_info)
 
-            config = AgentConfig()
+            config = AgentConfig(repositories=["partition", "legal"])
             result = await detect_available_services(config)
 
             # Only partition should be returned (legal failed)

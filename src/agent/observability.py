@@ -176,6 +176,11 @@ async def setup_azure_ai_foundry_observability() -> Optional[str]:
         logger.debug("Azure AI Foundry observability: insufficient configuration")
         return None
 
+    # Type narrowing: all() check ensures these are not None
+    assert subscription_id is not None
+    assert resource_group is not None
+    assert workspace_name is not None
+
     # Fetch connection string from workspace
     connection_string = await fetch_app_insights_from_workspace(
         subscription_id, resource_group, workspace_name
@@ -256,7 +261,7 @@ def initialize_observability() -> bool:
         tracer_provider = trace.get_tracer_provider()
         if isinstance(tracer_provider, TracerProvider):
             processor = UserSessionSpanProcessor()
-            tracer_provider.add_span_processor(processor)
+            tracer_provider.add_span_processor(processor)  # type: ignore[arg-type]
             logger.info("  User/session span processor installed")
 
         logger.info("OpenTelemetry observability initialized successfully")
@@ -283,9 +288,12 @@ def initialize_observability() -> bool:
 
 
 class UserSessionSpanProcessor:
-    """Span processor that injects user/session context into spans on start."""
+    """Span processor that injects user/session context into spans on start.
 
-    def on_start(self, span, parent_context=None):
+    Implements the SpanProcessor protocol for OpenTelemetry.
+    """
+
+    def on_start(self, span, parent_context=None):  # type: ignore[no-untyped-def]
         """Called when a span is started - inject user/session attributes."""
         try:
             user_context = get_user_session_context()
@@ -296,15 +304,15 @@ class UserSessionSpanProcessor:
         except Exception as e:
             logger.debug(f"Error injecting user context into span: {e}")
 
-    def on_end(self, span):
+    def on_end(self, span):  # type: ignore[no-untyped-def]
         """Called when a span ends - no-op."""
         pass
 
-    def shutdown(self):
+    def shutdown(self):  # type: ignore[no-untyped-def]
         """Called on shutdown - no-op."""
         pass
 
-    def force_flush(self, timeout_millis=30000):
+    def force_flush(self, timeout_millis=30000):  # type: ignore[no-untyped-def]
         """Called to force flush - no-op."""
         pass
 

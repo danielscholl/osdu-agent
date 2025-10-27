@@ -42,10 +42,10 @@ Supports issues, PRs, workflows, code scanning. Includes dependency analysis and
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) package manager
 
-**Optional (enhances experience):**
-- [GitHub CLI](https://github.com/cli/cli#installation) - for auth, connection status, and assigning issues to Copilot Workspace
-- [GitLab CLI](https://gitlab.com/gitlab-org/cli) - for auth and connection status (if using GitLab features)
-- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) - for auth and observability auto-fetch
+**Optional (simplifies authentication):**
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) - auth via `az login` + observability auto-fetch
+- [GitHub CLI](https://github.com/cli/cli#installation) - auth via `gh auth login` + connection status
+- [GitLab CLI](https://gitlab.com/gitlab-org/cli) - auth via `glab auth login` (if using GitLab features)
 - [Trivy](https://trivy.dev) - for vulnerability scanning
 
 ## Quick Setup

@@ -939,7 +939,7 @@ async def _setup_foundry_observability_if_needed() -> None:
             tracer_provider = trace.get_tracer_provider()
             if isinstance(tracer_provider, TracerProvider):
                 processor = UserSessionSpanProcessor()
-                tracer_provider.add_span_processor(processor)
+                tracer_provider.add_span_processor(processor)  # type: ignore[arg-type]
                 import logging
 
                 logger = logging.getLogger(__name__)

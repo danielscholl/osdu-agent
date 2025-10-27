@@ -159,7 +159,7 @@ class Agent:
             chat_client=chat_client,
             instructions=self.instructions,
             tools=all_tools,
-            name="SPI GitHub Issues Agent",
+            name="OSDU Agent",
             middleware=all_middleware,  # type: ignore[arg-type]
         )
 
@@ -206,7 +206,7 @@ Managed Repositories: {', '.join(self.config.repositories)}
 
         Allows continuous conversation with the agent.
         """
-        print("=== SPI GitHub Issues Agent ===")
+        print("=== OSDU Agent ===")
         print(f"Organization: {self.config.organization}")
         print(f"Repositories: {', '.join(self.config.repositories)}")
         print("\nType 'exit' or 'quit' to end the session.\n")
