@@ -807,27 +807,18 @@ class StatusRunner(BaseRunner):
             all_workflows = [w for workflows in workflows_by_service.values() for w in workflows]
 
             if all_workflows:
-                len(all_workflows)
-
                 # Initialize counters
                 needs_approval_count = 0
 
                 # Count by status
                 if is_gitlab:
-                    sum(1 for w in all_workflows if w.get("status") == "success")
                     failed_count = sum(1 for w in all_workflows if w.get("status") == "failed")
                     running_count = sum(
                         1
                         for w in all_workflows
                         if w.get("status") in ["running", "pending", "created"]
                     )
-                    sum(1 for w in all_workflows if w.get("status") in ["canceled", "skipped"])
                 else:
-                    sum(
-                        1
-                        for w in all_workflows
-                        if w.get("status") == "completed" and w.get("conclusion") == "success"
-                    )
                     failed_count = sum(
                         1
                         for w in all_workflows
