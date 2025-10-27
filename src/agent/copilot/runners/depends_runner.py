@@ -891,10 +891,8 @@ IMPORTANT: "core" is always analyzed as the base dependency. Providers are: core
             # Run with Live display
             with Live(layout, console=console, refresh_per_second=2) as live:
                 # Run services in parallel (max 2 at a time)
-                from asyncio import Semaphore, gather
-
                 # Limit concurrent analysis to 2
-                semaphore = Semaphore(2)
+                semaphore = asyncio.Semaphore(2)
 
                 async def run_with_limit(service: str, svc_idx: int) -> str:
                     async with semaphore:
@@ -921,7 +919,7 @@ IMPORTANT: "core" is always analyzed as the base dependency. Providers are: core
                 tasks = [
                     run_with_limit(service, idx) for idx, service in enumerate(self.services, 1)
                 ]
-                await gather(*tasks)
+                await asyncio.gather(*tasks)
 
                 # Add completion message
                 complete_msg = "✓ Analysis complete for all services"

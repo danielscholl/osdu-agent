@@ -650,6 +650,7 @@ class ExecutionTreeDisplay:
             try:
                 await self._task
             except asyncio.CancelledError:
+                # Expected cancellation of background event processing task
                 pass
 
         # Stop Rich Live display
