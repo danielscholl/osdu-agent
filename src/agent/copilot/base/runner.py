@@ -18,7 +18,7 @@ from agent.copilot.config import log_dir
 
 if TYPE_CHECKING:
     # Import BaseTracker for type hints only (used in line 60) to avoid circular imports
-    from agent.copilot.base.tracker import BaseTracker
+    from agent.copilot.base.tracker import BaseTracker  # lgtm [py/unused-import]
 
 
 class _OutputPanelRenderable:

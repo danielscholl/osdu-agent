@@ -1250,4 +1250,6 @@ def test_assign_issue_to_copilot_gh_not_installed(test_config: AgentConfig, mock
         result = tools.assign_issue_to_copilot(repo="test-repo1", issue_number=42)
 
         assert "GitHub CLI (gh) is not installed" in result
-        assert "https://cli.github.com/" in result
+        assert (
+            "https://cli.github.com/" in result
+        )  # lgtm [py/incomplete-url-substring-sanitization]
