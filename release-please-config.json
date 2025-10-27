@@ -5,9 +5,6 @@
       "package-name": "osdu-agent",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
-      "extra-files": [
-        "src/agent/copilot/prompts/system.md"
-      ],
       "changelog-sections": [
         {
           "type": "feat",
