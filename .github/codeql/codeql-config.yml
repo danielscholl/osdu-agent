@@ -1,0 +1,21 @@
+name: "CodeQL Config"
+
+# Paths to exclude from CodeQL scanning
+paths-ignore:
+  - '**/test_*.py'  # Test files - exclude from URL sanitization checks
+
+# Query filters to suppress false positives
+query-filters:
+  - exclude:
+      id: py/incomplete-url-substring-sanitization
+      # Exclude URL substring checks in test files
+      # These are legitimate test assertions checking for expected domains in git remote URLs
+      paths:
+        - tests/**/*.py
+
+  - exclude:
+      id: py/unused-import
+      # Exclude unused import warnings for TYPE_CHECKING blocks
+      # These imports are used for type hints only and are intentionally under TYPE_CHECKING
+      paths:
+        - src/agent/copilot/base/runner.py

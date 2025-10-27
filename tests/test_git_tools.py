@@ -956,8 +956,9 @@ class TestRemoteManagement:
 
         assert "origin:" in result
         assert "upstream:" in result
-        assert "github.com" in result  # lgtm [py/incomplete-url-substring-sanitization]
-        assert "gitlab.com" in result  # lgtm [py/incomplete-url-substring-sanitization]
+        # Test assertions for git remote URLs - CodeQL suppression in .github/codeql/codeql-config.yml
+        assert "github.com" in result
+        assert "gitlab.com" in result
 
     @patch.object(GitRepositoryTools, "_execute_git_command")
     @patch.object(GitRepositoryTools, "_validate_repository")
@@ -987,7 +988,7 @@ class TestRemoteManagement:
         )
 
         assert "Successfully added remote 'upstream'" in result
-        assert "gitlab.com" in result  # lgtm [py/incomplete-url-substring-sanitization]
+        assert "gitlab.com" in result
 
     @patch.object(GitRepositoryTools, "_execute_git_command")
     @patch.object(GitRepositoryTools, "_validate_repository")
@@ -1094,7 +1095,7 @@ class TestUpstreamConfiguration:
         result = git_tools.configure_upstream_remote("partition")
 
         assert "Retrieved UPSTREAM_REPO_URL" in result
-        assert "gitlab.com" in result  # lgtm [py/incomplete-url-substring-sanitization]
+        assert "gitlab.com" in result
         assert "Successfully added remote 'upstream'" in result
         assert "Fetch successful" in result
 
