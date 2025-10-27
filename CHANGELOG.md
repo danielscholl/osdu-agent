@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.2...osdu-agent-v0.1.3) (2025-10-27)
+
+
+### Features
+
+* **mcp:** redirect stderr to /dev/null when logging disabled ([#9](https://github.com/danielscholl/osdu-agent/issues/9)) ([90f9a71](https://github.com/danielscholl/osdu-agent/commit/90f9a7189f268ae2f398b63793bb5fed015c8de3))
+
+
+### Bug Fixes
+
+* **release:** remove uv.lock from release-please configuration ([#10](https://github.com/danielscholl/osdu-agent/issues/10)) ([1ca1c08](https://github.com/danielscholl/osdu-agent/commit/1ca1c08b83f825036db3373f28cf32cd82ede64f))
+
 ## [0.1.2](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.1...osdu-agent-v0.1.2) (2025-10-27)
 
 
