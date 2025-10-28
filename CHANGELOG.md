@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.6...osdu-agent-v0.1.7) (2025-10-28)
+
+
+### Features
+
+* **mcp:** add OSDU MCP server integration ([#24](https://github.com/danielscholl/osdu-agent/issues/24)) ([ad68c6d](https://github.com/danielscholl/osdu-agent/commit/ad68c6dd6a14ebd2060f9cb1ba60b4b3d22f3609))
+
 ## [0.1.6](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.5...osdu-agent-v0.1.6) (2025-10-27)
 
 
