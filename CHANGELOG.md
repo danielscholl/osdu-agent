@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.14](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.13...osdu-agent-v0.1.14) (2025-10-28)
+
+
+### Performance Improvements
+
+* **cli:** defer observability initialization to background thread ([#40](https://github.com/danielscholl/osdu-agent/issues/40)) ([5fcc2ef](https://github.com/danielscholl/osdu-agent/commit/5fcc2efa2e87b21678e119c60184b3154a359933))
+
 ## [0.1.13](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.12...osdu-agent-v0.1.13) (2025-10-28)
 
 
