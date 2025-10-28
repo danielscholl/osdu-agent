@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.7...osdu-agent-v0.1.8) (2025-10-28)
+
+
+### Features
+
+* **cli:** add dynamic version display to status bar and startup banner ([#26](https://github.com/danielscholl/osdu-agent/issues/26)) ([70f6ab3](https://github.com/danielscholl/osdu-agent/commit/70f6ab32c93894a7fef359f0581cf5b2df647a23))
+
 ## [0.1.7](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.6...osdu-agent-v0.1.7) (2025-10-28)
 
 
