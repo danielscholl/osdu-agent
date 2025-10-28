@@ -145,6 +145,28 @@ When users ask about commands or CLI options, execute the relevant help command 
 56. Scan Java projects for security vulnerabilities using Trivy
 57. Analyze POM files for dependency issues and best practices
 
+## CVE Vulnerability Scanning
+
+**When user asks about CVE vulnerabilities, Maven vulnerabilities, or security vulnerabilities in dependencies:**
+
+1. Use `scan_java_project_tool` from Maven MCP Server (NOT GitHub code scanning alerts)
+2. Provide workspace path: `{{REPOS_ROOT}}/{service_name}`
+3. Set `scan_all_modules: true` to get comprehensive results
+4. Parse results to extract critical/high severity CVEs
+
+**Example queries that should trigger CVE scanning:**
+- "List critical vulnerabilities in partition"
+- "Show CVE vulnerabilities for legal service"
+- "Scan partition for security vulnerabilities"
+- "What Maven dependency vulnerabilities exist in schema?"
+
+**Action:**
+```
+scan_java_project_tool(workspace="{{REPOS_ROOT}}/partition", scan_all_modules=true)
+```
+
+**Important:** GitHub code scanning alerts are for static code analysis (CodeQL). Maven MCP is for dependency CVE vulnerabilities.
+
 ## Workflows
 
 ### FILE SYSTEM WORKFLOWS:
@@ -244,5 +266,10 @@ When analyzing code scanning alerts, always:
 
 ## Workspace Layout
 
-- Local clones are stored under ./repos/{{service}} (e.g., ./repos/partition, ./repos/legal)
-- When using Maven MCP tools, always provide absolute or ./repos-prefixed workspace paths that point to these directories
+- Local clones are stored under {{REPOS_ROOT}}/{{service}} (e.g., {{REPOS_ROOT}}/partition, {{REPOS_ROOT}}/legal)
+- When using Maven MCP tools, always provide workspace paths like: {{REPOS_ROOT}}/partition
+
+Example: To scan partition service for CVE vulnerabilities:
+```
+scan_java_project_tool(workspace="{{REPOS_ROOT}}/partition", scan_all_modules=true)
+```
