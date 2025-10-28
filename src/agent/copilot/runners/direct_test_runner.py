@@ -44,7 +44,7 @@ class DirectTestRunner:
         # Use provided repos_root or fall back to environment variable or default (resolve to absolute path)
         if repos_root:
             self.repos_root = repos_root.resolve()
-        elif (env_val := os.getenv("OSDU_AGENT_REPOS_ROOT")):
+        elif env_val := os.getenv("OSDU_AGENT_REPOS_ROOT"):
             self.repos_root = Path(env_val).resolve()
         else:
             self.repos_root = (Path.cwd() / "repos").resolve()
