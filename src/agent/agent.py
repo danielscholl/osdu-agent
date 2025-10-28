@@ -181,7 +181,7 @@ class Agent:
             return system_prompt
         except Exception:
             # Fallback to basic instructions if file not found
-            return f"""You are Betty, an AI assistant for managing GitHub repositories for OSDU services.
+            return f"""You are an OSDU AI assistant for managing GitHub repositories for OSDU services.
 Organization: {self.config.organization}
 Managed Repositories: {', '.join(self.config.repositories)}
 (System prompt file not found - using fallback)"""

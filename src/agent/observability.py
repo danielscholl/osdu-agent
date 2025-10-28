@@ -125,6 +125,12 @@ async def fetch_app_insights_from_workspace(
 
         return None
 
+    except subprocess.TimeoutExpired:
+        logger.debug(
+            "Azure Management API call timed out while fetching App Insights connection string. "
+            "To skip auto-discovery, set APPLICATIONINSIGHTS_CONNECTION_STRING directly."
+        )
+        return None
     except Exception as e:
         logger.warning(f"Error fetching App Insights connection string: {e}")
         return None
@@ -639,3 +645,31 @@ def get_user_session_context() -> Dict[str, str]:
     This is used internally by middleware to inject context into agent spans.
     """
     return _user_session_context.get()
+
+
+def get_observability_status() -> Dict[str, bool]:
+    """
+    Get the current observability configuration status.
+
+    Returns:
+        Dictionary with status information:
+        - configured: Whether observability is configured (any exporter available)
+        - app_insights: Whether Application Insights is configured
+        - otlp: Whether OTLP endpoint is configured
+        - initialized: Whether observability has been initialized
+
+    Example:
+        >>> from agent.observability import get_observability_status
+        >>> status = get_observability_status()
+        >>> if status["configured"]:
+        ...     print("Observability is active")
+    """
+    connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+    otlp_endpoint = os.getenv("OTLP_ENDPOINT")
+
+    return {
+        "configured": bool(connection_string or otlp_endpoint),
+        "app_insights": bool(connection_string),
+        "otlp": bool(otlp_endpoint),
+        "initialized": _observability_initialized,
+    }

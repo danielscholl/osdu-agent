@@ -37,8 +37,8 @@ class DisplayMode(Enum):
     VERBOSE = "verbose"
 
 
-# Symbol constants (minimal, Betty-themed)
-SYMBOL_QUERY = "◉"  # Session/query (Betty's eye)
+# Symbol constants (minimal, Agent-themed)
+SYMBOL_QUERY = "◉"  # Session/query (Agent's eye)
 SYMBOL_COMPLETE = "•"  # Completed item
 SYMBOL_ACTIVE = "●"  # Active/running
 SYMBOL_TOOL = "→"  # Tool executing
