@@ -227,7 +227,7 @@ The agent follows a modular architecture:
   - `VulnsRunner`: Security vulnerability scanning
   - `DependsRunner`: Dependency update analysis
 - **trackers/**: Real-time status tracking for concurrent operations
-- **prompts/**: System prompts for Betty AI assistant
+- **prompts/**: System prompts for OSDU AI assistant
 
 #### File System & Git (`src/agent/filesystem/`, `src/agent/git/`)
 - Hybrid file operations (local + MCP)
@@ -325,7 +325,7 @@ Reviewers will verify:
 
 ## Project-Specific Guidelines
 
-### Betty AI Assistant
+### OSDU AI Assistant
 
 When modifying the system prompt (`src/agent/copilot/prompts/system.md`):
 - Keep instructions concise and actionable

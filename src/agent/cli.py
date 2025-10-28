@@ -44,7 +44,7 @@ def _create_slash_command_completer() -> Any:
                 "/report": "Generate GitLab contribution reports",
                 "/clear": "Clear conversation history",
                 "help": "Show detailed examples",
-                "exit": "Quit Betty",
+                "exit": "Quit Agent",
             }
 
         def get_completions(self, document: Any, complete_event: Any) -> Any:
@@ -117,9 +117,9 @@ def _render_full_startup_banner(
 
     # Description
     console.print(
-        " Betty helps manage OSDU services. Describe a task to get started or enter 'help' for examples."
+        "The OSDU Agent helps manage OSDU services. Describe a task to get started or enter 'help' for examples."
     )
-    console.print(" Betty uses AI, check for mistakes.")
+    console.print("The OSDU Agent uses AI, check for mistakes.")
     console.print()
 
     # Connection status (only show active connections)
@@ -226,6 +226,8 @@ def _render_prompt_area(config: AgentConfig) -> None:
     Args:
         config: Agent configuration
     """
+    from agent.observability import is_observability_active
+
     left_content, right_content = _get_status_bar_content(config)
     separator = _get_separator_line()
 
@@ -233,11 +235,18 @@ def _render_prompt_area(config: AgentConfig) -> None:
     available_space = console.width - len(left_content) - len(right_content)
     spacing = " " * max(0, available_space)
 
+    # Check observability status for dot color indicator
+    # Green = observability active (configured + initialized), dim = inactive
+    dot_color = "green" if is_observability_active() else "dim"
+
     # Apply color markup to right content (model and version in cyan)
+    # Dot color indicates observability status: green = active, dim = inactive
     # Parse the right_content to colorize: "gpt-5-mini · v0.1.5"
     parts = right_content.split(" · ")
     if len(parts) == 2:
-        right_content_colored = f"[cyan]{parts[0]}[/cyan] · [cyan]{parts[1]}[/cyan]"
+        right_content_colored = (
+            f"[cyan]{parts[0]}[/cyan] [{dot_color}]·[/{dot_color}] [cyan]{parts[1]}[/cyan]"
+        )
     else:
         right_content_colored = f"[cyan]{right_content}[/cyan]"
 
@@ -1328,10 +1337,10 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
 
                 result_text = str(result) if not isinstance(result, str) else result
 
-                # Render response with minimal Betty-style formatting
+                # Render response with minimal Agent-style formatting
                 console.print()
 
-                # Render with Betty's face prefix (preserving markdown formatting)
+                # Render with Agent's face prefix (preserving markdown formatting)
                 from rich.text import Text
 
                 prefix = Text("◉‿◉ ", style="cyan")
@@ -1524,7 +1533,7 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
             else:
                 # Add blank line before separator (for spacing after header or verbose tree)
                 console.print()
-                # Print separator with Betty face
+                # Print separator with Agent's face
                 width = console.width
                 label = " ◉‿◉ "
                 label_len = len(label)

@@ -6,6 +6,7 @@ OpenTelemetry integration, enabling monitoring via Azure AI Foundry dashboards.
 
 import logging
 import os
+import subprocess
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Dict, Optional
 
@@ -40,8 +41,6 @@ async def fetch_app_insights_from_workspace(
     Returns:
         Application Insights connection string if successful, None otherwise
     """
-    import subprocess
-
     try:
         # Step 1: Get the Application Insights resource ID from the workspace
         workspace_url = (
@@ -125,6 +124,12 @@ async def fetch_app_insights_from_workspace(
 
         return None
 
+    except subprocess.TimeoutExpired:
+        logger.debug(
+            "Azure Management API call timed out while fetching App Insights connection string. "
+            "To skip auto-discovery, set APPLICATIONINSIGHTS_CONNECTION_STRING directly."
+        )
+        return None
     except Exception as e:
         logger.warning(f"Error fetching App Insights connection string: {e}")
         return None
@@ -639,3 +644,52 @@ def get_user_session_context() -> Dict[str, str]:
     This is used internally by middleware to inject context into agent spans.
     """
     return _user_session_context.get()
+
+
+def get_observability_status() -> Dict[str, bool]:
+    """
+    Get the current observability configuration status.
+
+    Returns:
+        Dictionary with status information:
+        - configured: Whether observability is configured (any exporter available)
+        - app_insights: Whether Application Insights is configured
+        - otlp: Whether OTLP endpoint is configured
+        - initialized: Whether observability has been initialized
+
+    Example:
+        >>> from agent.observability import get_observability_status
+        >>> status = get_observability_status()
+        >>> if status["configured"]:
+        ...     print("Observability is active")
+    """
+    connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+    otlp_endpoint = os.getenv("OTLP_ENDPOINT")
+
+    return {
+        "configured": bool(connection_string or otlp_endpoint),
+        "app_insights": bool(connection_string),
+        "otlp": bool(otlp_endpoint),
+        "initialized": _observability_initialized,
+    }
+
+
+def is_observability_active() -> bool:
+    """
+    Check if observability is currently active and sending telemetry.
+
+    This is a convenience function that checks both configuration and initialization
+    status. Observability is considered active only when:
+    1. At least one exporter is configured (App Insights or OTLP)
+    2. Observability has been successfully initialized
+
+    Returns:
+        bool: True if observability is active, False otherwise
+
+    Example:
+        >>> from agent.observability import is_observability_active
+        >>> if is_observability_active():
+        ...     print("Telemetry is being collected")
+    """
+    status = get_observability_status()
+    return status["configured"] and status["initialized"]
