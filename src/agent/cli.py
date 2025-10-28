@@ -8,6 +8,7 @@ import importlib.metadata
 import importlib.util
 import sys
 import types
+from contextlib import AsyncExitStack
 from pathlib import Path
 from typing import Any, List, Optional
 
@@ -17,7 +18,7 @@ from rich.panel import Panel
 
 from . import Agent
 from .config import AgentConfig
-from .mcp import MavenMCPManager
+from .mcp import MavenMCPManager, OsduMCPManager
 
 console = Console()
 
@@ -1013,9 +1014,6 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
     maven_mcp = MavenMCPManager(config)
 
     # Initialize OSDU MCP if enabled
-    from agent.mcp import OsduMCPManager
-    from contextlib import AsyncExitStack
-
     osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
 
     # Use AsyncExitStack to manage optional OSDU MCP context
@@ -1337,9 +1335,6 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
     maven_mcp = MavenMCPManager(config)
 
     # Initialize OSDU MCP if enabled
-    from agent.mcp import OsduMCPManager
-    from contextlib import AsyncExitStack
-
     osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
 
     # Use AsyncExitStack to manage optional OSDU MCP context
@@ -1861,9 +1856,6 @@ async def async_main(args: Optional[list[str]] = None) -> int:
         maven_mcp = MavenMCPManager(config)
 
         # Initialize OSDU MCP if enabled
-        from agent.mcp import OsduMCPManager
-        from contextlib import AsyncExitStack
-
         osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
 
         async with AsyncExitStack() as stack:
@@ -2083,9 +2075,6 @@ async def async_main(args: Optional[list[str]] = None) -> int:
         maven_mcp = MavenMCPManager(config)
 
         # Initialize OSDU MCP if enabled
-        from agent.mcp import OsduMCPManager
-        from contextlib import AsyncExitStack
-
         osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
 
         async with AsyncExitStack() as stack:
