@@ -226,8 +226,6 @@ def _render_prompt_area(config: AgentConfig) -> None:
     Args:
         config: Agent configuration
     """
-    from agent.observability import is_observability_active
-
     left_content, right_content = _get_status_bar_content(config)
     separator = _get_separator_line()
 
@@ -235,18 +233,11 @@ def _render_prompt_area(config: AgentConfig) -> None:
     available_space = console.width - len(left_content) - len(right_content)
     spacing = " " * max(0, available_space)
 
-    # Check observability status for dot color indicator
-    # Green = observability active (configured + initialized), dim = inactive
-    dot_color = "green" if is_observability_active() else "dim"
-
     # Apply color markup to right content (model and version in cyan)
-    # Dot color indicates observability status: green = active, dim = inactive
     # Parse the right_content to colorize: "gpt-5-mini · v0.1.5"
     parts = right_content.split(" · ")
     if len(parts) == 2:
-        right_content_colored = (
-            f"[cyan]{parts[0]}[/cyan] [{dot_color}]·[/{dot_color}] [cyan]{parts[1]}[/cyan]"
-        )
+        right_content_colored = f"[cyan]{parts[0]}[/cyan] · [cyan]{parts[1]}[/cyan]"
     else:
         right_content_colored = f"[cyan]{right_content}[/cyan]"
 
