@@ -441,3 +441,197 @@ class GitLabDirectClient:
             "duration": job.duration if hasattr(job, "duration") else None,
             "web_url": job.web_url if hasattr(job, "web_url") else None,
         }
+
+    # ========== Contribution Analysis Methods ==========
+
+    async def get_merge_requests_for_period(
+        self, project_path: str, start_date: datetime, end_date: datetime
+    ) -> List[Dict[str, Any]]:
+        """
+        Get merge requests for a project within a specific date range.
+
+        Args:
+            project_path: GitLab project path (e.g., "osdu/platform/system/partition")
+            start_date: Period start date
+            end_date: Period end date
+
+        Returns:
+            List of formatted merge request dictionaries
+        """
+        try:
+            project = await asyncio.to_thread(self.gitlab.projects.get, project_path)
+
+            # Format dates for GitLab API (ISO 8601)
+            start_str = start_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            end_str = end_date.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+            # Fetch merge requests created in the period
+            mrs = await asyncio.to_thread(
+                project.mergerequests.list,
+                created_after=start_str,
+                created_before=end_str,
+                per_page=100,
+                get_all=True,
+            )
+
+            return [self._format_merge_request_detailed(mr) for mr in mrs]
+
+        except GitlabError as e:
+            logger.error(f"Error fetching MRs for {project_path}: {e}")
+            return []
+
+    async def get_merge_request_discussions(
+        self, project_path: str, mr_iid: int
+    ) -> List[Dict[str, Any]]:
+        """
+        Get discussions (reviews and comments) for a merge request.
+
+        Args:
+            project_path: GitLab project path
+            mr_iid: Merge request IID
+
+        Returns:
+            List of discussion/comment dictionaries
+        """
+        try:
+            project = await asyncio.to_thread(self.gitlab.projects.get, project_path)
+            mr = await asyncio.to_thread(project.mergerequests.get, mr_iid)
+
+            # Fetch discussions
+            discussions = await asyncio.to_thread(mr.discussions.list, get_all=True)
+
+            formatted_discussions = []
+            for discussion in discussions:
+                for note in discussion.attributes.get("notes", []):
+                    formatted_discussions.append(
+                        {
+                            "id": note.get("id"),
+                            "author": note.get("author", {}).get("username", "unknown"),
+                            "body": note.get("body", ""),
+                            "created_at": note.get("created_at"),
+                            "type": note.get("type", "DiscussionNote"),
+                            "system": note.get("system", False),
+                        }
+                    )
+
+            return formatted_discussions
+
+        except GitlabError as e:
+            logger.warning(f"Error fetching discussions for MR !{mr_iid}: {e}")
+            return []
+
+    async def get_merge_request_approvals(
+        self, project_path: str, mr_iid: int
+    ) -> List[str]:
+        """
+        Get approvals for a merge request.
+
+        Args:
+            project_path: GitLab project path
+            mr_iid: Merge request IID
+
+        Returns:
+            List of approver usernames
+        """
+        try:
+            project = await asyncio.to_thread(self.gitlab.projects.get, project_path)
+            mr = await asyncio.to_thread(project.mergerequests.get, mr_iid)
+
+            # Get approvals - this fetches the approval state
+            approvals = await asyncio.to_thread(mr.approvals.get)
+
+            # Extract approved_by users
+            approved_by = []
+            if hasattr(approvals, "approved_by") and approvals.approved_by:
+                for approver in approvals.approved_by:
+                    username = approver.get("user", {}).get("username", "unknown")
+                    if username != "unknown":
+                        approved_by.append(username)
+
+            return approved_by
+
+        except (GitlabError, AttributeError) as e:
+            # Some projects may not have approval rules configured
+            logger.debug(f"Could not fetch approvals for MR !{mr_iid}: {e}")
+            return []
+
+    async def get_issues_by_labels(
+        self, project_path: str, labels: List[str], state: str = "all"
+    ) -> List[Dict[str, Any]]:
+        """
+        Get issues filtered by labels.
+
+        Args:
+            project_path: GitLab project path
+            labels: List of label names to filter by
+            state: Issue state ("opened", "closed", "all")
+
+        Returns:
+            List of formatted issue dictionaries
+        """
+        try:
+            project = await asyncio.to_thread(self.gitlab.projects.get, project_path)
+
+            # Fetch issues with specified labels
+            issues = await asyncio.to_thread(
+                project.issues.list, labels=labels, state=state, per_page=100, get_all=True
+            )
+
+            return [self._format_issue_detailed(issue) for issue in issues]
+
+        except GitlabError as e:
+            logger.error(f"Error fetching issues for {project_path}: {e}")
+            return []
+
+    async def get_all_contributors(self, project_path: str) -> List[str]:
+        """
+        Get all contributors (committers) for a project.
+
+        Args:
+            project_path: GitLab project path
+
+        Returns:
+            List of contributor usernames
+        """
+        try:
+            project = await asyncio.to_thread(self.gitlab.projects.get, project_path)
+
+            # Fetch repository contributors
+            contributors = await asyncio.to_thread(project.repository_contributors, get_all=True)
+
+            return [c.get("name", "unknown") for c in contributors]
+
+        except GitlabError as e:
+            logger.warning(f"Error fetching contributors for {project_path}: {e}")
+            return []
+
+    def _format_merge_request_detailed(self, mr: Any) -> Dict[str, Any]:
+        """Format merge request with additional details for analytics."""
+        base_data = self._format_merge_request(mr)
+        base_data.update(
+            {
+                "merged_at": mr.merged_at if hasattr(mr, "merged_at") else None,
+                "closed_at": mr.closed_at if hasattr(mr, "closed_at") else None,
+                "updated_at": mr.updated_at if hasattr(mr, "updated_at") else None,
+                "upvotes": mr.upvotes if hasattr(mr, "upvotes") else 0,
+                "downvotes": mr.downvotes if hasattr(mr, "downvotes") else 0,
+                "user_notes_count": mr.user_notes_count if hasattr(mr, "user_notes_count") else 0,
+                "has_conflicts": mr.has_conflicts if hasattr(mr, "has_conflicts") else False,
+                "merge_status": mr.merge_status if hasattr(mr, "merge_status") else "unknown",
+            }
+        )
+        return base_data
+
+    def _format_issue_detailed(self, issue: Any) -> Dict[str, Any]:
+        """Format issue with additional details for analytics."""
+        base_data = self._format_issue(issue)
+        base_data.update(
+            {
+                "closed_at": issue.closed_at if hasattr(issue, "closed_at") else None,
+                "updated_at": issue.updated_at if hasattr(issue, "updated_at") else None,
+                "upvotes": issue.upvotes if hasattr(issue, "upvotes") else 0,
+                "downvotes": issue.downvotes if hasattr(issue, "downvotes") else 0,
+                "user_notes_count": issue.user_notes_count if hasattr(issue, "user_notes_count") else 0,
+            }
+        )
+        return base_data
