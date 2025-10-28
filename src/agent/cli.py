@@ -41,6 +41,7 @@ def _create_slash_command_completer() -> Any:
                 "/depends": "Check for dependency updates",
                 "/fork": "Fork and clone repositories",
                 "/send": "Send GitHub PR/Issue to GitLab",
+                "/report": "Generate GitLab contribution reports",
                 "/clear": "Clear conversation history",
                 "help": "Show detailed examples",
                 "exit": "Quit Betty",
@@ -666,7 +667,61 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         )
         return None
 
-    return f"Unknown command: /{cmd}\nAvailable: /fork, /status, /test, /vulns, /send, /depends (or type 'help')"
+    if cmd == "report":
+        if not COPILOT_AVAILABLE or copilot_module is None:
+            return "Error: Copilot module not available for service validation"
+
+        # Parse arguments (everything after "/report")
+        # Format: /report [service] [mode] [days] [periods=N]
+        # Examples: /report partition adr 30
+        #           /report partition,legal compare 14 periods=2
+        services_arg = None
+        mode_days_args = []
+
+        # Check if first arg is a service name
+        if (
+            len(parts) >= 2
+            and not parts[1].isdigit()
+            and parts[1] not in ["adr", "trends", "contributions", "compare"]
+        ):
+            services_arg = parts[1]
+            mode_days_args = parts[2:]
+        else:
+            mode_days_args = parts[1:]
+
+        # Auto-detect available services if not specified
+        config = AgentConfig()
+        available_services = None
+        if services_arg is None:
+            available_services = await detect_available_services(config)
+
+            if not available_services:
+                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+
+            # Display auto-detection message
+            console.print(
+                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+            )
+            console.print()
+
+        # Parse services
+        services = copilot_module.parse_services(
+            services_arg, available_services=available_services
+        )
+        invalid = [s for s in services if s not in copilot_module.SERVICES]
+        if invalid:
+            return f"Error: Invalid service(s): {', '.join(invalid)}"
+
+        # Build args string from remaining arguments
+        args_string = " ".join(mode_days_args)
+
+        # Use workflow function to generate report
+        from agent.workflows.report_workflow import run_report_workflow
+
+        await run_report_workflow(args_string=args_string, services=services)
+        return None
+
+    return f"Unknown command: /{cmd}\nAvailable: /fork, /status, /test, /vulns, /send, /depends, /report (or type 'help')"
 
 
 def _render_help() -> None:
@@ -705,6 +760,13 @@ def _render_help() -> None:
 - `/depends <service>` - Analyze dependency updates (default: azure provider)
 - `/depends <service> --providers azure,core` - Check updates for specific providers
 - `/depends <service> --create-issue` - Create issues for available updates
+- `/report` - Period comparison for all services (last 30 days)
+- `/report partition` - Report for specific service
+- `/report partition,legal` - Report for multiple services
+- `/report partition adr 60` - ADR analysis for partition (60 days)
+- `/report 60` - Period comparison with 60-day periods (all services)
+- `/report periods=3` - Compare current vs 3 previous periods
+- `/report trends` - Contribution trends over 12 months
 - `/send <service> --pr <number>` - Send GitHub PR to GitLab as Merge Request
 - `/send <service> --issue <number>` - Send GitHub Issue to GitLab
 - `/send <service> --pr <num> --issue <num>` - Send both PR and Issue
@@ -1514,6 +1576,7 @@ Commands:
   test                Run Maven tests for services (requires copilot)
   vulns               Run dependency/vulnerability analysis (requires copilot)
   depends             Analyze dependency updates (requires copilot)
+  report              Generate GitLab contribution reports (requires copilot)
   send                Send GitHub PRs/Issues to GitLab (requires copilot)
 
 Examples:
@@ -1525,6 +1588,9 @@ Examples:
   osdu test --service partition          # Run Maven tests
   osdu vulns --service partition         # Run vulnerability analysis
   osdu depends --service partition       # Analyze dependency updates
+  osdu report --service partition        # Report for specific service
+  osdu report --service partition --mode adr --days 60  # ADR report (60 days)
+  osdu report --mode trends              # Trend analysis (all services)
   osdu send --service partition --pr 5   # Send PR to GitLab
         """,
     )
@@ -1677,6 +1743,36 @@ Examples:
             "--create-issue",
             action="store_true",
             help="Create GitHub tracking issues for available updates",
+        )
+
+        report_parser = subparsers.add_parser(
+            "report",
+            help="Generate GitLab contribution reports",
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
+        report_parser.add_argument(
+            "--service",
+            "-s",
+            default=None,
+            help="Service name(s): 'all', single name, or comma-separated list (default: auto-detect available services)",
+        )
+        report_parser.add_argument(
+            "--mode",
+            choices=["compare", "adr", "trends", "contributions"],
+            default="compare",
+            help="Report mode (default: compare)",
+        )
+        report_parser.add_argument(
+            "--days",
+            type=int,
+            default=30,
+            help="Number of days per period (default: 30)",
+        )
+        report_parser.add_argument(
+            "--periods",
+            type=int,
+            default=1,
+            help="Number of previous periods to compare (default: 1)",
         )
 
     parser.add_argument(
@@ -2137,6 +2233,62 @@ async def async_main(args: Optional[list[str]] = None) -> int:
                 include_testing,
             )
             return int(await runner.run())
+
+    if parsed.command == "report":
+        if not COPILOT_AVAILABLE:
+            console.print("[red]Error:[/red] Copilot module not available", style="bold red")
+            console.print("[dim]Clone the repository to access Copilot workflows[/dim]")
+            return 1
+
+        assert copilot_module is not None  # Type narrowing for MyPy
+
+        # Auto-detect available services if --service not specified
+        config = AgentConfig()
+        available_services = None
+        if parsed.service is None:
+            available_services = await detect_available_services(config)
+
+            if not available_services:
+                console.print(
+                    f"[red]Error:[/red] No available services found in {config.repos_root}/",
+                    style="bold red",
+                )
+                console.print("[dim]Run 'osdu fork --service all' to clone repositories[/dim]")
+                return 1
+
+            # Display auto-detection message
+            console.print(
+                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+            )
+            console.print()
+
+        # Parse services
+        services = copilot_module.parse_services(
+            parsed.service, available_services=available_services
+        )
+        invalid = [s for s in services if s not in copilot_module.SERVICES]
+        if invalid:
+            console.print(
+                f"[red]Error:[/red] Invalid service(s): {', '.join(invalid)}", style="bold red"
+            )
+            return 1
+
+        # Build args string from parsed arguments
+        args_parts = []
+        if parsed.mode != "compare":
+            args_parts.append(parsed.mode)
+        if parsed.days != 30:
+            args_parts.append(str(parsed.days))
+        if parsed.periods != 1:
+            args_parts.append(f"periods={parsed.periods}")
+
+        args_string = " ".join(args_parts)
+
+        # Run report workflow
+        from agent.workflows.report_workflow import run_report_workflow
+
+        await run_report_workflow(args_string=args_string, services=services)
+        return 0
 
     if parsed.prompt:
         return await run_single_query(parsed.prompt, parsed.quiet, parsed.verbose)
