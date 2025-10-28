@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.9...osdu-agent-v0.1.10) (2025-10-28)
+
+
+### Bug Fixes
+
+* **prompts:** resolve CVE scanning workspace path and tool selection issues ([#32](https://github.com/danielscholl/osdu-agent/issues/32)) ([2d0d1aa](https://github.com/danielscholl/osdu-agent/commit/2d0d1aa113a771f158bd1d53572d7df20f55727f))
+
 ## [0.1.9](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.8...osdu-agent-v0.1.9) (2025-10-28)
 
 
