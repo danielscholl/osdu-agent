@@ -941,7 +941,7 @@ async def _setup_foundry_observability_if_needed() -> None:
     """
     import os
 
-    # Try auto-discovery if AZURE_AI_PROJECT_CONNECTION_STRING is set
+    # Try auto-discovery if AZURE_AI_PROJECT_CONNECTION_STRING or AZURE_AI_PROJECT_ENDPOINT is set
     if not os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING") and (
         os.getenv("AZURE_AI_PROJECT_ENDPOINT") or os.getenv("AZURE_AI_PROJECT_CONNECTION_STRING")
     ):
@@ -1069,7 +1069,7 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
         thread = agent.agent.get_new_thread()
 
         # Set thread_id in observability context for telemetry tracking
-        if hasattr(thread, 'id'):
+        if hasattr(thread, "id"):
             set_session_context(session_id=session_id, thread_id=thread.id)
 
         # Use prompt_toolkit for better terminal handling (backspace, arrows, history)
@@ -1166,7 +1166,7 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
                         thread = agent.agent.get_new_thread()
 
                         # Set thread_id in observability context
-                        if hasattr(thread, 'id'):
+                        if hasattr(thread, "id"):
                             set_session_context(session_id=session_id, thread_id=thread.id)
 
                         continue
@@ -1403,7 +1403,7 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
                 thread = agent.agent.get_new_thread()
 
                 # Set thread_id in observability context
-                if hasattr(thread, 'id'):
+                if hasattr(thread, "id"):
                     set_session_context(session_id=session_id, thread_id=thread.id)
 
                 async with tree_display:
@@ -1437,7 +1437,7 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
                         thread = agent.agent.get_new_thread()
 
                         # Set thread_id in observability context
-                        if hasattr(thread, 'id'):
+                        if hasattr(thread, "id"):
                             set_session_context(session_id=session_id, thread_id=thread.id)
 
                         result = await agent.agent.run(prompt, thread=thread)
@@ -1450,7 +1450,7 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
                 thread = agent.agent.get_new_thread()
 
                 # Set thread_id in observability context
-                if hasattr(thread, 'id'):
+                if hasattr(thread, "id"):
                     set_session_context(session_id=session_id, thread_id=thread.id)
 
                 result = await agent.agent.run(prompt, thread=thread)
