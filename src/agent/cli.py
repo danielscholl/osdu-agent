@@ -95,6 +95,7 @@ def _render_full_startup_banner(
     maven_mcp_version: str = "2.3.0",
     github_connected: bool = True,
     gitlab_connected: bool = False,
+    osdu_mcp_available: bool = False,
 ) -> None:
     """Render the full startup banner with all connection info.
 
@@ -106,6 +107,7 @@ def _render_full_startup_banner(
         maven_mcp_version: Version of Maven MCP server
         github_connected: Whether GitHub connection is valid
         gitlab_connected: Whether GitLab connection is valid
+        osdu_mcp_available: Whether OSDU MCP is available
     """
     # Header
     console.print(" [cyan]◉‿◉[/cyan]  Welcome to OSDU Agent")
@@ -132,6 +134,15 @@ def _render_full_startup_banner(
     if maven_mcp_available:
         console.print(
             f" [green]●[/green] Connected to Maven MCP Server ([cyan]v{maven_mcp_version}[/cyan])",
+            highlight=False,
+        )
+
+    # OSDU MCP - only show if feature is enabled
+    if config.osdu_mcp_enabled:
+        status_dot = "[green]●[/green]" if osdu_mcp_available else "[red]●[/red]"
+        status_text = "Connected" if osdu_mcp_available else "Not connected"
+        console.print(
+            f" {status_dot} {status_text} to OSDU MCP Server ([cyan]v1.0.0[/cyan])",
             highlight=False,
         )
 
@@ -1001,9 +1012,28 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
     # Initialize Maven MCP if enabled
     maven_mcp = MavenMCPManager(config)
 
-    async with maven_mcp:
-        # Create agent with Maven MCP tools if available
-        agent = Agent(config, mcp_tools=maven_mcp.tools)
+    # Initialize OSDU MCP if enabled
+    from agent.mcp import OsduMCPManager
+    from contextlib import AsyncExitStack
+
+    osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
+
+    # Use AsyncExitStack to manage optional OSDU MCP context
+    async with AsyncExitStack() as stack:
+        # Always enter Maven MCP context
+        await stack.enter_async_context(maven_mcp)
+
+        # Conditionally enter OSDU MCP context if enabled
+        if osdu_mcp:
+            await stack.enter_async_context(osdu_mcp)
+            # Combine tools from both MCP servers
+            all_mcp_tools = maven_mcp.tools + osdu_mcp.tools
+        else:
+            # Only Maven MCP tools
+            all_mcp_tools = maven_mcp.tools
+
+        # Create agent with appropriate MCP tools
+        agent = Agent(config, mcp_tools=all_mcp_tools)
 
         if not quiet:
             # Validate connections and count local repositories (run in parallel)
@@ -1023,6 +1053,7 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
                 maven_mcp_version="2.3.0",
                 github_connected=github_connected,
                 gitlab_connected=gitlab_connected,
+                osdu_mcp_available=osdu_mcp.is_available if osdu_mcp else False,
             )
 
             # Render prompt area
@@ -1305,16 +1336,42 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
     # Initialize Maven MCP if enabled
     maven_mcp = MavenMCPManager(config)
 
-    async with maven_mcp:
-        # Create agent with Maven MCP tools if available
-        agent = Agent(config, mcp_tools=maven_mcp.tools)
+    # Initialize OSDU MCP if enabled
+    from agent.mcp import OsduMCPManager
+    from contextlib import AsyncExitStack
+
+    osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
+
+    # Use AsyncExitStack to manage optional OSDU MCP context
+    async with AsyncExitStack() as stack:
+        # Always enter Maven MCP context
+        await stack.enter_async_context(maven_mcp)
+
+        # Conditionally enter OSDU MCP context if enabled
+        if osdu_mcp:
+            await stack.enter_async_context(osdu_mcp)
+            # Combine tools from both MCP servers
+            all_mcp_tools = maven_mcp.tools + osdu_mcp.tools
+        else:
+            # Only Maven MCP tools
+            all_mcp_tools = maven_mcp.tools
+
+        # Create agent with appropriate MCP tools
+        agent = Agent(config, mcp_tools=all_mcp_tools)
 
         # Show header for both default and verbose modes (not quiet)
         if not quiet:
             maven_status = "enabled" if maven_mcp.is_available else "disabled"
+            osdu_status = "enabled" if (osdu_mcp and osdu_mcp.is_available) else "disabled"
             console.print(" [cyan]◉‿◉[/cyan]  OSDU Agent")
+
+            # Show MCP server status
+            mcp_status_parts = [f"Maven MCP: [cyan]{maven_status}[/cyan]"]
+            if config.osdu_mcp_enabled:
+                mcp_status_parts.append(f"OSDU MCP: [cyan]{osdu_status}[/cyan]")
+
             console.print(
-                f" Model: [cyan]{agent.config.azure_openai_deployment}[/cyan] · Maven MCP: [cyan]{maven_status}[/cyan]"
+                f" Model: [cyan]{agent.config.azure_openai_deployment}[/cyan] · {' · '.join(mcp_status_parts)}"
             )
 
         try:
@@ -1803,13 +1860,29 @@ async def async_main(args: Optional[list[str]] = None) -> int:
         config = AgentConfig()
         maven_mcp = MavenMCPManager(config)
 
-        async with maven_mcp:
+        # Initialize OSDU MCP if enabled
+        from agent.mcp import OsduMCPManager
+        from contextlib import AsyncExitStack
+
+        osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
+
+        async with AsyncExitStack() as stack:
+            # Always enter Maven MCP context
+            await stack.enter_async_context(maven_mcp)
+
             if not maven_mcp.is_available:
                 console.print("[red]Error:[/red] Maven MCP not available", style="bold red")
                 console.print("[dim]Maven MCP is required for vulnerability analysis[/dim]")
                 return 1
 
-            agent = Agent(config, mcp_tools=maven_mcp.tools)
+            # Conditionally enter OSDU MCP context if enabled
+            if osdu_mcp:
+                await stack.enter_async_context(osdu_mcp)
+                all_mcp_tools = maven_mcp.tools + osdu_mcp.tools
+            else:
+                all_mcp_tools = maven_mcp.tools
+
+            agent = Agent(config, mcp_tools=all_mcp_tools)
 
             runner = copilot_module.VulnsRunner(
                 prompt_file,
@@ -2009,13 +2082,29 @@ async def async_main(args: Optional[list[str]] = None) -> int:
         config = AgentConfig()
         maven_mcp = MavenMCPManager(config)
 
-        async with maven_mcp:
+        # Initialize OSDU MCP if enabled
+        from agent.mcp import OsduMCPManager
+        from contextlib import AsyncExitStack
+
+        osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
+
+        async with AsyncExitStack() as stack:
+            # Always enter Maven MCP context
+            await stack.enter_async_context(maven_mcp)
+
             if not maven_mcp.is_available:
                 console.print("[red]Error:[/red] Maven MCP not available", style="bold red")
                 console.print("[dim]Maven MCP is required for dependency analysis[/dim]")
                 return 1
 
-            agent = Agent(config, mcp_tools=maven_mcp.tools)
+            # Conditionally enter OSDU MCP context if enabled
+            if osdu_mcp:
+                await stack.enter_async_context(osdu_mcp)
+                all_mcp_tools = maven_mcp.tools + osdu_mcp.tools
+            else:
+                all_mcp_tools = maven_mcp.tools
+
+            agent = Agent(config, mcp_tools=all_mcp_tools)
 
             runner = copilot_module.DependsRunner(
                 prompt_file,
