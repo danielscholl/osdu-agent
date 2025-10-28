@@ -139,7 +139,11 @@ class AgentConfig:
     )
 
     repos_root: Path = field(
-        default_factory=lambda: Path(os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos"))
+        default_factory=lambda: (
+            Path(env_val).resolve()
+            if (env_val := os.getenv("OSDU_AGENT_REPOS_ROOT"))
+            else (Path.cwd() / "repos").resolve()
+        )
     )
 
     github_token: Optional[str] = field(default_factory=_get_github_token)

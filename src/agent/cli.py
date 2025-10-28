@@ -185,11 +185,12 @@ def _get_status_bar_content(config: AgentConfig) -> tuple[str, str]:
     cwd = Path.cwd()
     home = Path.home()
 
-    # Shorten path if it's under home directory
+    # Shorten path if it's under home directory (use forward slashes for consistency)
     try:
-        display_path = f"~/{cwd.relative_to(home)}"
+        rel_path = cwd.relative_to(home)
+        display_path = f"~/{rel_path.as_posix()}"
     except ValueError:
-        display_path = str(cwd)
+        display_path = cwd.as_posix()
 
     # Get git branch
     branch = ""
