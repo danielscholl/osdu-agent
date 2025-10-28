@@ -101,11 +101,11 @@ def test_config_from_env_var_parsing():
 
 
 def test_config_maven_mcp_defaults():
-    """Test Maven MCP default configuration values."""
+    """Test Maven MCP default configuration values (unpinned - uses latest version)."""
     with patch.dict(os.environ, {}, clear=True):
         config = AgentConfig()
         assert config.maven_mcp_command == "uvx"
-        assert config.maven_mcp_args == ["--quiet", "mvn-mcp-server==2.3.0"]
+        assert config.maven_mcp_args == ["--quiet", "mvn-mcp-server"]
 
 
 def test_config_maven_mcp_version_override():
@@ -226,9 +226,7 @@ def test_azure_openai_deployment_default():
 
 def test_azure_openai_deployment_from_env():
     """Test that Azure OpenAI deployment can be overridden via environment variable."""
-    with patch.dict(
-        os.environ, {"AZURE_OPENAI_DEPLOYMENT_NAME": "custom-deployment"}, clear=True
-    ):
+    with patch.dict(os.environ, {"AZURE_OPENAI_DEPLOYMENT_NAME": "custom-deployment"}, clear=True):
         config = AgentConfig()
         assert config.azure_openai_deployment == "custom-deployment"
 
@@ -242,8 +240,6 @@ def test_azure_openai_api_version_default():
 
 def test_azure_openai_api_version_from_env():
     """Test that Azure OpenAI API version can be overridden via environment variable."""
-    with patch.dict(
-        os.environ, {"AZURE_OPENAI_API_VERSION": "2024-10-01-preview"}, clear=True
-    ):
+    with patch.dict(os.environ, {"AZURE_OPENAI_API_VERSION": "2024-10-01-preview"}, clear=True):
         config = AgentConfig()
         assert config.azure_openai_api_version == "2024-10-01-preview"

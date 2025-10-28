@@ -1,6 +1,7 @@
 """Status runner for gathering GitHub/GitLab repository information using direct API calls."""
 
 import logging
+import os
 from datetime import datetime
 from importlib.resources.abc import Traversable
 from pathlib import Path
@@ -35,8 +36,8 @@ class StatusRunner(BaseRunner):
     ):
         self.providers = providers  # Optional providers for GitLab filtering (must be set before super().__init__)
         self.show_actions = show_actions  # Control display of detailed workflow/pipeline table
-        # Pass dummy path since we don't use prompts in direct API mode
-        super().__init__(prompt_file or Path("/dev/null"), services)
+        # Pass dummy path since we don't use prompts in direct API mode (cross-platform null device)
+        super().__init__(prompt_file or Path(os.devnull), services)
 
     @property
     def log_prefix(self) -> str:

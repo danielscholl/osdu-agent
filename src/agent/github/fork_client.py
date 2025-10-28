@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -64,9 +65,9 @@ class ForkDirectClient:
             self.github = Github(pool_size=50, retry=retry)
             logger.info("Using GitHub without authentication (rate limited)")
 
-        # Set repos directory
-        self.repos_dir = repos_dir or config.repos_root
-        self.repos_dir.mkdir(exist_ok=True)
+        # Set repos directory (resolve to absolute path for cross-platform compatibility)
+        self.repos_dir = (repos_dir or config.repos_root).resolve()
+        self.repos_dir.mkdir(parents=True, exist_ok=True)
 
     async def fork_service(
         self,
@@ -258,11 +259,11 @@ class ForkDirectClient:
                 # Clone template to temporary location
                 temp_dir = self.repos_dir / service
                 if temp_dir.exists():
-                    # Remove existing directory
+                    # Remove existing directory (cross-platform)
                     await asyncio.to_thread(
-                        subprocess.run,
-                        ["rm", "-rf", str(temp_dir)],
-                        timeout=30,
+                        shutil.rmtree,
+                        temp_dir,
+                        ignore_errors=True,
                     )
 
                 # Clone template

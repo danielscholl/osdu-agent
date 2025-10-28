@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import re
 from pathlib import Path
 from typing import Any, List
@@ -24,8 +25,8 @@ class CopilotRunner(BaseRunner):
         services: List[str],
         branch: str | None = None,
     ):
-        # Pass dummy path since we don't use prompts in direct API mode
-        super().__init__(Path("/dev/null"), services)
+        # Pass dummy path since we don't use prompts in direct API mode (cross-platform null device)
+        super().__init__(Path(os.devnull), services)
         self.branch = branch if branch is not None else config.default_branch
         self.tracker: ServiceTracker = ServiceTracker(services)  # Override type from BaseRunner
 

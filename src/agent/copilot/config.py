@@ -19,7 +19,7 @@ class CopilotConfig(BaseSettings):
     log_directory: Optional[str] = None
 
     def __init__(self, **kwargs):
-        """Initialize with support for GITHUB_SPI_* variables (preferred over COPILOT_*)."""
+        """Initialize with support for GITHUB_SPI_* and OSDU_AGENT_* variables (preferred over COPILOT_*)."""
         super().__init__(**kwargs)
 
         # Override with GITHUB_SPI_* variables if set (takes precedence)
@@ -31,6 +31,10 @@ class CopilotConfig(BaseSettings):
 
         if os.getenv("GITHUB_SPI_BRANCH"):
             self.default_branch = os.getenv("GITHUB_SPI_BRANCH")
+
+        # Override with OSDU_AGENT_LOG_DIRECTORY if set (preferred over COPILOT_LOG_DIRECTORY)
+        if os.getenv("OSDU_AGENT_LOG_DIRECTORY"):
+            self.log_directory = os.getenv("OSDU_AGENT_LOG_DIRECTORY")
 
 
 # Load environment variables from .env if it exists
