@@ -1068,6 +1068,10 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
 
         thread = agent.agent.get_new_thread()
 
+        # Set thread_id in observability context for telemetry tracking
+        if hasattr(thread, 'id'):
+            set_session_context(session_id=session_id, thread_id=thread.id)
+
         # Use prompt_toolkit for better terminal handling (backspace, arrows, history)
         session = None
         prompt_tokens = None
@@ -1160,6 +1164,11 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
 
                         # Replace thread
                         thread = agent.agent.get_new_thread()
+
+                        # Set thread_id in observability context
+                        if hasattr(thread, 'id'):
+                            set_session_context(session_id=session_id, thread_id=thread.id)
+
                         continue
 
                     # Handle errors
@@ -1393,6 +1402,10 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
                 # Create a new thread for the single query
                 thread = agent.agent.get_new_thread()
 
+                # Set thread_id in observability context
+                if hasattr(thread, 'id'):
+                    set_session_context(session_id=session_id, thread_id=thread.id)
+
                 async with tree_display:
                     # Interactive mode already set at function start
                     result = await agent.agent.run(prompt, thread=thread)
@@ -1422,6 +1435,11 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
                     async with tree_display:
                         # Create a new thread for the single query
                         thread = agent.agent.get_new_thread()
+
+                        # Set thread_id in observability context
+                        if hasattr(thread, 'id'):
+                            set_session_context(session_id=session_id, thread_id=thread.id)
+
                         result = await agent.agent.run(prompt, thread=thread)
                 finally:
                     # Reset interactive mode
@@ -1430,6 +1448,11 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
             else:
                 # Quiet mode - no display, just execute
                 thread = agent.agent.get_new_thread()
+
+                # Set thread_id in observability context
+                if hasattr(thread, 'id'):
+                    set_session_context(session_id=session_id, thread_id=thread.id)
+
                 result = await agent.agent.run(prompt, thread=thread)
 
             result_text = str(result) if not isinstance(result, str) else result
