@@ -176,9 +176,7 @@ class Agent:
             system_prompt = system_prompt.replace(
                 "{{REPOSITORIES}}", ", ".join(self.config.repositories)
             )
-            system_prompt = system_prompt.replace(
-                "{{REPOS_ROOT}}", str(self.config.repos_root)
-            )
+            system_prompt = system_prompt.replace("{{REPOS_ROOT}}", str(self.config.repos_root))
 
             return system_prompt
         except Exception:
