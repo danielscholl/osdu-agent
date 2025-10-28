@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.10...osdu-agent-v0.1.11) (2025-10-28)
+
+
+### Features
+
+* **gitlab:** add comprehensive GitLab contribution reporting ([#34](https://github.com/danielscholl/osdu-agent/issues/34)) ([741d464](https://github.com/danielscholl/osdu-agent/commit/741d464d474b27efe5ee797405c5f3c397b9ec93))
+
 ## [0.1.10](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.9...osdu-agent-v0.1.10) (2025-10-28)
 
 
