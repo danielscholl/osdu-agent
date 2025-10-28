@@ -163,7 +163,7 @@ class TestVulnsRunner:
         assert runner.create_issue is False
         assert runner.severity_filter == ["critical", "high"]
         assert isinstance(runner.tracker, VulnsTracker)
-        # log_file may be None if COPILOT_LOG_DIRECTORY is not set
+        # log_file may be None if OSDU_AGENT_LOG_DIRECTORY (or COPILOT_LOG_DIRECTORY) is not set
         if runner.log_file is not None:
             assert runner.log_file.name.startswith("vulns_")
 
@@ -296,7 +296,7 @@ class TestVulnsRunner:
 
         # Single service
         runner1 = VulnsRunner(mock_prompt_file, ["partition"], mock_agent)
-        # log_file may be None if COPILOT_LOG_DIRECTORY is not set
+        # log_file may be None if OSDU_AGENT_LOG_DIRECTORY (or COPILOT_LOG_DIRECTORY) is not set
         if runner1.log_file is not None:
             log_name = str(runner1.log_file)
             assert "vulns_" in log_name
