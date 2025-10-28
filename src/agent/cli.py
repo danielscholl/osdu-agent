@@ -941,8 +941,11 @@ async def _setup_foundry_observability_if_needed() -> None:
     if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
         return  # Already configured via env var
 
-    if not os.getenv("AZURE_AI_PROJECT_ENDPOINT"):
-        return  # No Foundry endpoint configured
+    # Check if either project endpoint or connection string is configured
+    if not os.getenv("AZURE_AI_PROJECT_ENDPOINT") and not os.getenv(
+        "AZURE_AI_PROJECT_CONNECTION_STRING"
+    ):
+        return  # No Foundry configuration found
 
     try:
         from agent.observability import setup_azure_ai_foundry_observability
@@ -967,7 +970,7 @@ async def _setup_foundry_observability_if_needed() -> None:
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.debug(f"Azure AI Foundry observability setup skipped: {e}")
+        logger.warning(f"Azure AI Foundry observability setup failed: {e}")
 
 
 async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
