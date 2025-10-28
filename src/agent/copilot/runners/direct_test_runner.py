@@ -41,10 +41,13 @@ class DirectTestRunner:
         # Track current module being built (for per-profile test count parsing)
         self.current_module = None
 
-        # Use provided repos_root or fall back to environment variable or default
-        self.repos_root = repos_root or Path(
-            os.getenv("OSDU_AGENT_REPOS_ROOT", Path.cwd() / "repos")
-        )
+        # Use provided repos_root or fall back to environment variable or default (resolve to absolute path)
+        if repos_root:
+            self.repos_root = repos_root.resolve()
+        elif (env_val := os.getenv("OSDU_AGENT_REPOS_ROOT")):
+            self.repos_root = Path(env_val).resolve()
+        else:
+            self.repos_root = (Path.cwd() / "repos").resolve()
 
     def _parse_provider_to_profiles(self, provider: str) -> List[str]:
         """Parse provider string into list of profiles."""
