@@ -182,10 +182,10 @@ class AgentConfig:
     maven_mcp_args: List[str] = field(
         default_factory=lambda: [
             "--quiet",  # Suppress uvx output
-            # Pin to specific version for reproducibility
-            # v2.3.0 includes per-module vulnerability tracking and severity filtering
-            # Can override via MAVEN_MCP_VERSION env var
-            os.getenv("MAVEN_MCP_VERSION", "mvn-mcp-server==2.3.0"),
+            # Uses latest version by default (no pinning)
+            # Pin to specific version via MAVEN_MCP_VERSION env var (e.g., "mvn-mcp-server==2.3.0")
+            # Latest version includes per-module vulnerability tracking and severity filtering
+            os.getenv("MAVEN_MCP_VERSION", "mvn-mcp-server"),
             # Note: stderr is redirected to logs/maven_mcp_*.log by QuietMCPStdioTool
         ]
     )
@@ -201,10 +201,10 @@ class AgentConfig:
     osdu_mcp_args: List[str] = field(
         default_factory=lambda: [
             "--quiet",  # Suppress uvx output
-            # Pin to specific version for stability
-            # v1.0.0 provides 31 tools, 3 prompts, 4 resources via FastMCP
-            # Can override via OSDU_MCP_VERSION env var
-            os.getenv("OSDU_MCP_VERSION", "osdu-mcp-server==1.0.0"),
+            # Uses latest version by default (no pinning)
+            # Pin to specific version via OSDU_MCP_VERSION env var (e.g., "osdu-mcp-server==1.0.0")
+            # Latest version provides 31 tools, 3 prompts, 4 resources via FastMCP
+            os.getenv("OSDU_MCP_VERSION", "osdu-mcp-server"),
             # Note: stderr is redirected to logs/osdu_mcp_*.log by QuietMCPStdioTool
         ]
     )

@@ -153,9 +153,7 @@ class OsduMCPManager:
             logger.info(f"Available capabilities: {len(self.tools)} tool(s)")
 
         except FileNotFoundError as e:
-            logger.error(
-                f"OSDU MCP server not found: {e}. " f"Install with: uvx osdu-mcp-server==1.0.0"
-            )
+            logger.error(f"OSDU MCP server not found: {e}. " f"Install with: uvx osdu-mcp-server")
             self.mcp_tool = None
         except Exception as e:
             logger.error(f"Failed to initialize OSDU MCP server: {e}")
