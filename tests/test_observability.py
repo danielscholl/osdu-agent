@@ -12,10 +12,16 @@ from agent.observability import (
     record_vulns_scan,
     record_workflow_run,
 )
+import agent.observability
 
 
 class TestObservabilityInitialization:
     """Tests for observability initialization."""
+
+    def setup_method(self):
+        """Reset observability state before each test."""
+        # Reset the global initialization flag to allow tests to run independently
+        agent.observability._observability_initialized = False
 
     def test_initialize_with_app_insights_connection_string(self):
         """Test initialization with Application Insights connection string."""
