@@ -925,52 +925,56 @@ def format_auto_detection_message(services: List[str], config: Optional[AgentCon
 
 async def _setup_foundry_observability_if_needed() -> None:
     """
-    Set up Azure AI Foundry observability if configured.
+    Set up Azure AI Foundry observability if configured, then initialize observability.
 
     This automatically fetches the Application Insights connection string from
     the Azure AI Foundry project, so users don't need to configure it manually.
 
-    Requires:
-        - AZURE_AI_PROJECT_ENDPOINT environment variable
-        - Azure authentication (az login)
-        - No APPLICATIONINSIGHTS_CONNECTION_STRING (to avoid duplication)
+    Supports:
+        - AZURE_AI_PROJECT_CONNECTION_STRING: Auto-fetches App Insights connection string
+        - APPLICATIONINSIGHTS_CONNECTION_STRING: Direct connection string (no auto-discovery)
+        - AZURE_AI_PROJECT_ENDPOINT: Project endpoint (requires connection string format)
+
+    This function is called early in CLI startup to ensure observability is initialized
+    AFTER auto-discovery completes, allowing users to set only AZURE_AI_PROJECT_CONNECTION_STRING
+    in their global environment (~/.zshenv) without needing to manually fetch App Insights details.
     """
     import os
 
-    # Only use Foundry auto-discovery if no connection string is set
-    if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING"):
-        return  # Already configured via env var
-
-    # Check if either project endpoint or connection string is configured
-    if not os.getenv("AZURE_AI_PROJECT_ENDPOINT") and not os.getenv(
-        "AZURE_AI_PROJECT_CONNECTION_STRING"
+    # Try auto-discovery if AZURE_AI_PROJECT_CONNECTION_STRING or AZURE_AI_PROJECT_ENDPOINT is set
+    if not os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING") and (
+        os.getenv("AZURE_AI_PROJECT_ENDPOINT") or os.getenv("AZURE_AI_PROJECT_CONNECTION_STRING")
     ):
-        return  # No Foundry configuration found
+        try:
+            from agent.observability import setup_azure_ai_foundry_observability
 
-    try:
-        from agent.observability import setup_azure_ai_foundry_observability
+            result = await setup_azure_ai_foundry_observability()
+            if result:
+                # Install user/session span processor after Foundry setup
+                from agent.observability import UserSessionSpanProcessor
+                from opentelemetry import trace
+                from opentelemetry.sdk.trace import TracerProvider
 
-        result = await setup_azure_ai_foundry_observability()
-        if result:
-            # Install user/session span processor after Foundry setup
-            from agent.observability import UserSessionSpanProcessor
-            from opentelemetry import trace
-            from opentelemetry.sdk.trace import TracerProvider
+                tracer_provider = trace.get_tracer_provider()
+                if isinstance(tracer_provider, TracerProvider):
+                    processor = UserSessionSpanProcessor()
+                    tracer_provider.add_span_processor(processor)  # type: ignore[arg-type]
+                    import logging
 
-            tracer_provider = trace.get_tracer_provider()
-            if isinstance(tracer_provider, TracerProvider):
-                processor = UserSessionSpanProcessor()
-                tracer_provider.add_span_processor(processor)  # type: ignore[arg-type]
-                import logging
+                    logger = logging.getLogger(__name__)
+                    logger.info("  User/session span processor installed")
 
-                logger = logging.getLogger(__name__)
-                logger.info("  User/session span processor installed")
+        except Exception as e:
+            import logging
 
-    except Exception as e:
-        import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Azure AI Foundry observability setup failed: {e}")
 
-        logger = logging.getLogger(__name__)
-        logger.warning(f"Azure AI Foundry observability setup failed: {e}")
+    # Now initialize observability with whatever configuration is available
+    # (either auto-discovered or from environment variables)
+    from agent.observability import initialize_observability
+
+    initialize_observability()
 
 
 async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
@@ -1064,6 +1068,10 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
 
         thread = agent.agent.get_new_thread()
 
+        # Set thread_id in observability context for telemetry tracking
+        if hasattr(thread, "id"):
+            set_session_context(session_id=session_id, thread_id=thread.id)
+
         # Use prompt_toolkit for better terminal handling (backspace, arrows, history)
         session = None
         prompt_tokens = None
@@ -1156,6 +1164,11 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
 
                         # Replace thread
                         thread = agent.agent.get_new_thread()
+
+                        # Set thread_id in observability context
+                        if hasattr(thread, "id"):
+                            set_session_context(session_id=session_id, thread_id=thread.id)
+
                         continue
 
                     # Handle errors
@@ -1389,6 +1402,10 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
                 # Create a new thread for the single query
                 thread = agent.agent.get_new_thread()
 
+                # Set thread_id in observability context
+                if hasattr(thread, "id"):
+                    set_session_context(session_id=session_id, thread_id=thread.id)
+
                 async with tree_display:
                     # Interactive mode already set at function start
                     result = await agent.agent.run(prompt, thread=thread)
@@ -1418,6 +1435,11 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
                     async with tree_display:
                         # Create a new thread for the single query
                         thread = agent.agent.get_new_thread()
+
+                        # Set thread_id in observability context
+                        if hasattr(thread, "id"):
+                            set_session_context(session_id=session_id, thread_id=thread.id)
+
                         result = await agent.agent.run(prompt, thread=thread)
                 finally:
                     # Reset interactive mode
@@ -1426,6 +1448,11 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
             else:
                 # Quiet mode - no display, just execute
                 thread = agent.agent.get_new_thread()
+
+                # Set thread_id in observability context
+                if hasattr(thread, "id"):
+                    set_session_context(session_id=session_id, thread_id=thread.id)
+
                 result = await agent.agent.run(prompt, thread=thread)
 
             result_text = str(result) if not isinstance(result, str) else result

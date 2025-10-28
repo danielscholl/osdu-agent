@@ -160,6 +160,7 @@ class Agent:
             instructions=self.instructions,
             tools=all_tools,
             name="OSDU Agent",
+            model=self.config.azure_openai_deployment,  # Explicit model name for telemetry
             middleware=all_middleware,  # type: ignore[arg-type]
         )
 
