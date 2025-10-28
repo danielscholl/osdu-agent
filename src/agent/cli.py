@@ -236,11 +236,11 @@ def _render_prompt_area(config: AgentConfig) -> None:
     spacing = " " * max(0, available_space)
 
     # Check observability status for dot color indicator
-    # Green = observability active (configured + initialized), red = inactive
-    dot_color = "green" if is_observability_active() else "red"
+    # Green = observability active (configured + initialized), dim = inactive
+    dot_color = "green" if is_observability_active() else "dim"
 
     # Apply color markup to right content (model and version in cyan)
-    # Dot color indicates observability status: green = active, red = inactive
+    # Dot color indicates observability status: green = active, dim = inactive
     # Parse the right_content to colorize: "gpt-5-mini · v0.1.5"
     parts = right_content.split(" · ")
     if len(parts) == 2:
