@@ -101,11 +101,11 @@ def test_config_from_env_var_parsing():
 
 
 def test_config_maven_mcp_defaults():
-    """Test Maven MCP default configuration values."""
+    """Test Maven MCP default configuration values (unpinned - uses latest version)."""
     with patch.dict(os.environ, {}, clear=True):
         config = AgentConfig()
         assert config.maven_mcp_command == "uvx"
-        assert config.maven_mcp_args == ["--quiet", "mvn-mcp-server==2.3.0"]
+        assert config.maven_mcp_args == ["--quiet", "mvn-mcp-server"]
 
 
 def test_config_maven_mcp_version_override():

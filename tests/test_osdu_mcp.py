@@ -272,8 +272,9 @@ class TestOsduMCPManager:
 class TestOsduMCPConfig:
     """Test OSDU MCP configuration in AgentConfig."""
 
-    def test_osdu_mcp_disabled_by_default(self):
+    def test_osdu_mcp_disabled_by_default(self, monkeypatch):
         """Test OSDU MCP is disabled by default."""
+        monkeypatch.delenv("ENABLE_OSDU_MCP_SERVER", raising=False)
         config = AgentConfig()
         assert config.osdu_mcp_enabled is False
 
@@ -289,16 +290,20 @@ class TestOsduMCPConfig:
         config = AgentConfig()
         assert config.osdu_mcp_enabled is False
 
-    def test_osdu_mcp_default_command(self):
+    def test_osdu_mcp_default_command(self, monkeypatch):
         """Test OSDU MCP default command."""
+        monkeypatch.delenv("OSDU_MCP_VERSION", raising=False)
         config = AgentConfig()
         assert config.osdu_mcp_command == "uvx"
 
-    def test_osdu_mcp_default_args(self):
-        """Test OSDU MCP default args."""
+    def test_osdu_mcp_default_args(self, monkeypatch):
+        """Test OSDU MCP default args (unpinned - uses latest version)."""
+        monkeypatch.delenv("OSDU_MCP_VERSION", raising=False)
         config = AgentConfig()
         assert "--quiet" in config.osdu_mcp_args
-        assert any("osdu-mcp-server==1.0.0" in arg for arg in config.osdu_mcp_args)
+        assert any("osdu-mcp-server" in arg for arg in config.osdu_mcp_args)
+        # Verify unpinned (no version specified)
+        assert not any("osdu-mcp-server==" in arg for arg in config.osdu_mcp_args)
 
     def test_osdu_mcp_version_override(self, monkeypatch):
         """Test OSDU MCP version can be overridden."""
