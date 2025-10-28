@@ -213,7 +213,6 @@ class GitLabContributionAnalyzer:
                         logger.debug(
                             f"Skipping ADR {adr_iid} with invalid created_at: {created_at}"
                         )
-                        pass
 
                 adr_stats.total_adrs += 1
 

@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from agent.gitlab.analytics import GitLabContributionAnalyzer
-from agent.gitlab.models import ReportMode
 from agent.workflows.report_workflow import (
     _generate_adr_report,
     _generate_comparison_report,
@@ -233,9 +232,7 @@ async def test_generate_adr_report_with_mocks(sample_adrs):
 
 
 @pytest.mark.asyncio
-async def test_generate_contributions_report_with_mocks(
-    sample_merge_requests, sample_discussions
-):
+async def test_generate_contributions_report_with_mocks(sample_merge_requests, sample_discussions):
     """Test contributions report generation with mocked data."""
     from io import StringIO
 
@@ -327,9 +324,7 @@ async def test_run_report_workflow_integration():
             mock_client.get_issues_by_labels = AsyncMock(return_value=[])
 
             # Run workflow
-            result = await run_report_workflow(
-                args_string="compare 7", services=["test-service"]
-            )
+            result = await run_report_workflow(args_string="compare 7", services=["test-service"])
 
             # Verify workflow completed
             assert result.workflow_type == "report"
@@ -344,7 +339,7 @@ async def test_report_formatter_methods():
 
     from rich.console import Console
 
-    from agent.gitlab.models import ADRStats, ContributionStats, PeriodStats
+    from agent.gitlab.models import PeriodStats
     from agent.gitlab.report_formatter import ReportFormatter
 
     # Create formatter with string buffer
@@ -370,9 +365,7 @@ async def test_report_formatter_methods():
     formatter.format_executive_summary(current, previous_period=None)
 
     # Test with previous period for comparison
-    previous = PeriodStats(
-        start_date=start - timedelta(days=30), end_date=start, days=30
-    )
+    previous = PeriodStats(start_date=start - timedelta(days=30), end_date=start, days=30)
     previous.contributions.total_mrs = 8
     previous.contributions.merged_mrs = 6
     previous.contributions.active_contributors = 4
@@ -402,7 +395,9 @@ async def test_report_formatter_methods():
     formatter.format_project_breakdown(current)
 
     # Test trend chart
-    formatter.format_trend_chart("Total MRs", [10, 8, 12, 6], ["Current", "Month -1", "Month -2", "Month -3"])
+    formatter.format_trend_chart(
+        "Total MRs", [10, 8, 12, 6], ["Current", "Month -1", "Month -2", "Month -3"]
+    )
 
     # Verify output was generated
     output = string_buffer.getvalue()
@@ -489,8 +484,8 @@ async def test_report_workflow_error_handling():
     result = await run_report_workflow(args_string="", services=[])
 
     assert result.workflow_type == "report"
-    # Should handle gracefully (either error or success with no data)
-    assert result.status in ["error", "success"]
+    assert result.status == "error"
+    assert "No services" in result.summary
 
 
 @pytest.mark.asyncio

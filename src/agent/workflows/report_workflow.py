@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 from rich.console import Console
 
@@ -105,14 +105,14 @@ def _calculate_period_dates(days: int, num_periods: int) -> List[Tuple[datetime,
 
 
 async def run_report_workflow(
-    args_string: str = "", services: Optional[List[str]] = None
+    args_string: str = "", services: List[str] | None = None
 ) -> WorkflowResult:
     """
     Run report workflow for GitLab contributions.
 
     Args:
         args_string: Argument string (e.g., "compare 30 periods=3")
-        services: Optional list of services (auto-detected if None)
+        services: List of services to analyze (required)
 
     Returns:
         WorkflowResult with report data
@@ -135,26 +135,20 @@ async def run_report_workflow(
         span.set_attribute("periods", num_periods)
 
         try:
+            # Validate services parameter
+            if not services:
+                formatter.print_error("No services provided")
+                return WorkflowResult(
+                    workflow_type="report",
+                    timestamp=workflow_start,
+                    services=[],
+                    status="error",
+                    summary="No services provided",
+                    detailed_results={},
+                )
+
             # Load config
             config = AgentConfig()
-
-            # Auto-detect services if not provided
-            if services is None:
-                formatter.print_info("Auto-detecting available services...")
-                from agent.cli import detect_available_services
-
-                services = await detect_available_services(config)
-
-                if not services:
-                    formatter.print_error("No services found in configuration")
-                    return WorkflowResult(
-                        workflow_type="report",
-                        timestamp=workflow_start,
-                        services=[],
-                        status="error",
-                        summary="No services found in configuration",
-                        detailed_results={},
-                    )
 
             span.set_attribute("service_count", len(services))
 
@@ -203,8 +197,10 @@ async def run_report_workflow(
             elif mode == ReportMode.ADR:
                 result_data = await _generate_adr_report(analyzer, formatter, project_paths, days)
             elif mode == ReportMode.TRENDS:
+                # For trends, use days parameter to determine months (days/30, default 12 months)
+                months = max(1, days // 30) if days != 30 else 12
                 result_data = await _generate_trends_report(
-                    analyzer, formatter, project_paths, months=12
+                    analyzer, formatter, project_paths, months=months
                 )
             elif mode == ReportMode.CONTRIBUTIONS:
                 result_data = await _generate_contributions_report(
