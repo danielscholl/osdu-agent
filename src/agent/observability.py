@@ -22,6 +22,9 @@ os.environ.setdefault("OTEL_SERVICE_NAME", "osdu-agent")
 # Context variables for user/session tracking across async contexts
 _user_session_context: ContextVar[Dict[str, str]] = ContextVar("user_session_context", default={})
 
+# Track if observability has been initialized (for idempotency)
+_observability_initialized = False
+
 
 async def fetch_app_insights_from_workspace(
     subscription_id: str, resource_group: str, workspace_name: str
@@ -209,7 +212,7 @@ def initialize_observability() -> bool:
     Initialize OpenTelemetry observability with automatic Azure AI Foundry support.
 
     This function should be called early in the application lifecycle to enable tracing and metrics
-    export to Azure Application Insights.
+    export to Azure Application Insights. It is idempotent and safe to call multiple times.
 
     Initialization Order:
     1. Try Azure AI Foundry auto-discovery (if AZURE_AI_PROJECT_ENDPOINT set)
@@ -225,6 +228,13 @@ def initialize_observability() -> bool:
         ENABLE_SENSITIVE_DATA: Set to 'true' to log prompts, responses, and tool arguments (default: false)
         OTLP_ENDPOINT: Optional OTLP endpoint for additional exporters (e.g., http://localhost:4317)
     """
+    global _observability_initialized
+
+    # Return early if already initialized (idempotency)
+    if _observability_initialized:
+        logger.debug("Observability already initialized, skipping")
+        return True
+
     connection_string = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
     otlp_endpoint = os.getenv("OTLP_ENDPOINT")
     project_endpoint = os.getenv("AZURE_AI_PROJECT_ENDPOINT")
@@ -283,6 +293,7 @@ def initialize_observability() -> bool:
                 "  Sensitive data logging ENABLED - prompts and responses will be logged"
             )
 
+        _observability_initialized = True
         return True
 
     except Exception as e:
@@ -338,9 +349,9 @@ class UserSessionSpanProcessor:
         return True
 
 
-# Initialize observability automatically on module import
-# Called for side effects (sets up exporters if configured)
-initialize_observability()
+# Note: Observability initialization is deferred to CLI startup to allow
+# auto-discovery from AZURE_AI_PROJECT_CONNECTION_STRING to complete first.
+# See _setup_foundry_observability_if_needed() in cli.py
 
 # Initialize OpenTelemetry tracer and meter
 # These will use the configured exporters if observability was initialized
