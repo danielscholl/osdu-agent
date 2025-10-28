@@ -159,13 +159,13 @@ repos_root: Path = field(
 self.repos_dir = repos_dir or config.repos_root
 ```
 
-**Solution:** Always resolve to absolute paths
+**Solution:** Always resolve to absolute paths (using walrus operator to avoid redundant calls)
 ```python
 # After
 repos_root: Path = field(
     default_factory=lambda: (
-        Path(os.getenv("OSDU_AGENT_REPOS_ROOT")).resolve()
-        if os.getenv("OSDU_AGENT_REPOS_ROOT")
+        Path(env_val).resolve()
+        if (env_val := os.getenv("OSDU_AGENT_REPOS_ROOT"))
         else (Path.cwd() / "repos").resolve()
     )
 )
