@@ -186,6 +186,25 @@ class AgentConfig:
         ]
     )
 
+    # OSDU MCP Configuration (experimental - feature flagged)
+    # Environment variables for OSDU MCP server are passed directly to subprocess
+    # and validated by OsduMCPManager (not stored in config)
+    osdu_mcp_enabled: bool = field(
+        default_factory=lambda: os.getenv("ENABLE_OSDU_MCP_SERVER", "false").lower() == "true"
+    )
+
+    osdu_mcp_command: str = "uvx"
+    osdu_mcp_args: List[str] = field(
+        default_factory=lambda: [
+            "--quiet",  # Suppress uvx output
+            # Pin to specific version for stability
+            # v1.0.0 provides 31 tools, 3 prompts, 4 resources via FastMCP
+            # Can override via OSDU_MCP_VERSION env var
+            os.getenv("OSDU_MCP_VERSION", "osdu-mcp-server==1.0.0"),
+            # Note: stderr is redirected to logs/osdu_mcp_*.log by QuietMCPStdioTool
+        ]
+    )
+
     # Hosted Tools Configuration
     client_type: Literal["openai", "ai_agent"] = field(
         default_factory=lambda: os.getenv("OSDU_AGENT_CLIENT_TYPE", "openai")  # type: ignore
