@@ -6,6 +6,7 @@ OpenTelemetry integration, enabling monitoring via Azure AI Foundry dashboards.
 
 import logging
 import os
+import subprocess
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Dict, Optional
 
@@ -40,8 +41,6 @@ async def fetch_app_insights_from_workspace(
     Returns:
         Application Insights connection string if successful, None otherwise
     """
-    import subprocess
-
     try:
         # Step 1: Get the Application Insights resource ID from the workspace
         workspace_url = (
@@ -673,3 +672,24 @@ def get_observability_status() -> Dict[str, bool]:
         "otlp": bool(otlp_endpoint),
         "initialized": _observability_initialized,
     }
+
+
+def is_observability_active() -> bool:
+    """
+    Check if observability is currently active and sending telemetry.
+
+    This is a convenience function that checks both configuration and initialization
+    status. Observability is considered active only when:
+    1. At least one exporter is configured (App Insights or OTLP)
+    2. Observability has been successfully initialized
+
+    Returns:
+        bool: True if observability is active, False otherwise
+
+    Example:
+        >>> from agent.observability import is_observability_active
+        >>> if is_observability_active():
+        ...     print("Telemetry is being collected")
+    """
+    status = get_observability_status()
+    return status["configured"] and status["initialized"]

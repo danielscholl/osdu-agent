@@ -226,7 +226,7 @@ def _render_prompt_area(config: AgentConfig) -> None:
     Args:
         config: Agent configuration
     """
-    from agent.observability import get_observability_status
+    from agent.observability import is_observability_active
 
     left_content, right_content = _get_status_bar_content(config)
     separator = _get_separator_line()
@@ -236,8 +236,8 @@ def _render_prompt_area(config: AgentConfig) -> None:
     spacing = " " * max(0, available_space)
 
     # Check observability status for dot color indicator
-    obs_status = get_observability_status()
-    dot_color = "green" if obs_status["configured"] and obs_status["initialized"] else "dim"
+    # Green = observability active (configured + initialized), dim = inactive
+    dot_color = "green" if is_observability_active() else "dim"
 
     # Apply color markup to right content (model and version in cyan)
     # Dot color indicates observability status: green = active, dim = inactive

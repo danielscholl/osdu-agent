@@ -10,6 +10,7 @@ from agent.observability import (
     fetch_app_insights_from_workspace,
     get_observability_status,
     initialize_observability,
+    is_observability_active,
     record_llm_call,
     record_test_run,
     record_tool_call,
@@ -160,7 +161,7 @@ class TestAppInsightsFetch:
     @pytest.mark.asyncio
     async def test_fetch_app_insights_timeout_handled_gracefully(self):
         """Test that Azure API timeout is handled gracefully without warning logs."""
-        with patch("subprocess.run") as mock_run:
+        with patch("agent.observability.subprocess.run") as mock_run:
             # Simulate timeout exception
             mock_run.side_effect = subprocess.TimeoutExpired(cmd=["az", "rest"], timeout=10)
 
@@ -179,7 +180,7 @@ class TestAppInsightsFetch:
     @pytest.mark.asyncio
     async def test_fetch_app_insights_generic_exception_logged_as_warning(self):
         """Test that non-timeout exceptions are logged as warnings."""
-        with patch("subprocess.run") as mock_run:
+        with patch("agent.observability.subprocess.run") as mock_run:
             # Simulate generic exception
             mock_run.side_effect = RuntimeError("Unexpected error")
 
@@ -528,3 +529,39 @@ class TestObservabilityStatus:
             status = get_observability_status()
             assert status["configured"] is True
             assert status["initialized"] is True
+
+    def test_is_observability_active_when_configured_and_initialized(self):
+        """Test helper function returns True when both configured and initialized."""
+        connection_string = "InstrumentationKey=test-key"
+
+        # Set up: configured and initialized
+        agent.observability._observability_initialized = True
+
+        with patch.dict(
+            os.environ,
+            {"APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string},
+            clear=True,
+        ):
+            assert is_observability_active() is True
+
+    def test_is_observability_active_when_configured_but_not_initialized(self):
+        """Test helper function returns False when configured but not initialized."""
+        connection_string = "InstrumentationKey=test-key"
+
+        # Set up: configured but not initialized
+        agent.observability._observability_initialized = False
+
+        with patch.dict(
+            os.environ,
+            {"APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string},
+            clear=True,
+        ):
+            assert is_observability_active() is False
+
+    def test_is_observability_active_when_not_configured(self):
+        """Test helper function returns False when not configured."""
+        # Reset initialization state
+        agent.observability._observability_initialized = True
+
+        with patch.dict(os.environ, {}, clear=True):
+            assert is_observability_active() is False
