@@ -209,8 +209,9 @@ def _get_status_bar_content(config: AgentConfig) -> tuple[str, str]:
 
     # Build status line (without markup for length calculation)
     model_display = config.azure_openai_deployment
+    version = _get_version()
     left_content = f" {display_path}{branch}"
-    right_content = f"{model_display} · v0.1.0"
+    right_content = f"{model_display} · v{version}"
 
     return left_content, right_content
 
@@ -231,7 +232,7 @@ def _render_prompt_area(config: AgentConfig) -> None:
     spacing = " " * max(0, available_space)
 
     # Apply color markup to right content (model and version in cyan)
-    # Parse the right_content to colorize: "gpt-5-mini · v0.1.0"
+    # Parse the right_content to colorize: "gpt-5-mini · v0.1.5"
     parts = right_content.split(" · ")
     if len(parts) == 2:
         right_content_colored = f"[cyan]{parts[0]}[/cyan] · [cyan]{parts[1]}[/cyan]"
@@ -1358,7 +1359,8 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
         if not quiet:
             maven_status = "enabled" if maven_mcp.is_available else "disabled"
             osdu_status = "enabled" if (osdu_mcp and osdu_mcp.is_available) else "disabled"
-            console.print(" [cyan]◉‿◉[/cyan]  OSDU Agent")
+            version = _get_version()
+            console.print(f" [cyan]◉‿◉[/cyan]  OSDU Agent [cyan]v{version}[/cyan]")
 
             # Show MCP server status
             mcp_status_parts = [f"Maven MCP: [cyan]{maven_status}[/cyan]"]
