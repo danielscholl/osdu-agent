@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.11...osdu-agent-v0.1.12) (2025-10-28)
+
+
+### Features
+
+* rebrand Betty AI to OSDU Agent with observability status indicator ([#36](https://github.com/danielscholl/osdu-agent/issues/36)) ([37bf5cc](https://github.com/danielscholl/osdu-agent/commit/37bf5ccd77eb2936aa3fd6208c96ee79bed1be5c))
+
 ## [0.1.11](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.10...osdu-agent-v0.1.11) (2025-10-28)
 
 
