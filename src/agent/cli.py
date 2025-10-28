@@ -994,14 +994,18 @@ def format_auto_detection_message(services: List[str], config: Optional[AgentCon
     return f"Auto-detected {count} {service_word}: {service_list}"
 
 
-async def _setup_foundry_observability_if_needed() -> None:
+def _setup_observability_if_configured() -> None:
     """
-    Initialize observability if configured via environment variables.
+    Initialize observability in background if configured via environment variables.
 
-    Requires APPLICATIONINSIGHTS_CONNECTION_STRING or OTLP_ENDPOINT to be set in environment.
+    Having APPLICATIONINSIGHTS_CONNECTION_STRING or OTLP_ENDPOINT set = opted in.
+    Not having them set = opted out.
 
     Note: Auto-discovery of Application Insights connection string from AZURE_AI_PROJECT_CONNECTION_STRING
     has been removed due to startup performance issues (10-20 second Azure API delays).
+
+    Initialization runs in a background thread to avoid blocking CLI startup (~4-7 second delay).
+    The status bar dot will update to green once initialization completes.
 
     To set up observability:
     1. Get your connection string from Azure Portal or via:
@@ -1009,9 +1013,20 @@ async def _setup_foundry_observability_if_needed() -> None:
     2. Add to .env file:
        APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=...;IngestionEndpoint=..."
     """
-    from agent.observability import initialize_observability
+    import os
+    import threading
 
-    initialize_observability()
+    # Only initialize if user has opted in (connection string or OTLP endpoint set)
+    if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING") or os.getenv("OTLP_ENDPOINT"):
+        from agent.observability import initialize_observability
+
+        # Run in background thread to avoid blocking startup
+        # Azure Monitor exporter initialization takes 4-7 seconds to connect
+        def init_in_background():
+            initialize_observability()
+
+        thread = threading.Thread(target=init_in_background, daemon=True)
+        thread.start()
 
 
 async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
@@ -1027,8 +1042,8 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
 
     config = AgentConfig()
 
-    # Set up Azure AI Foundry observability if configured (auto-fetches App Insights connection string)
-    await _setup_foundry_observability_if_needed()
+    # Set up observability if configured (requires manual APPLICATIONINSIGHTS_CONNECTION_STRING)
+    _setup_observability_if_configured()
 
     # Set execution context for interactive mode
     from agent.display import ExecutionContext, set_execution_context
@@ -1347,8 +1362,8 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
     import getpass
     import os as _os
 
-    # Set up Azure AI Foundry observability if configured (auto-fetches App Insights connection string)
-    await _setup_foundry_observability_if_needed()
+    # Set up observability if configured (requires manual APPLICATIONINSIGHTS_CONNECTION_STRING)
+    _setup_observability_if_configured()
 
     # CRITICAL: Set execution context FIRST, before any agent initialization
     # This ensures EventEmitter has interactive mode set when Agent initializes
