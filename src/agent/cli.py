@@ -996,12 +996,16 @@ def format_auto_detection_message(services: List[str], config: Optional[AgentCon
 
 async def _setup_foundry_observability_if_needed() -> None:
     """
-    Initialize observability if configured via environment variables.
+    Initialize observability in background if configured via environment variables.
 
     Requires APPLICATIONINSIGHTS_CONNECTION_STRING or OTLP_ENDPOINT to be set in environment.
+    Having the connection string set = opted in, not having it = opted out.
 
     Note: Auto-discovery of Application Insights connection string from AZURE_AI_PROJECT_CONNECTION_STRING
     has been removed due to startup performance issues (10-20 second Azure API delays).
+
+    Observability initialization runs in a background thread to avoid blocking CLI startup.
+    Azure Monitor OpenTelemetry exporter connection takes ~4-7 seconds, so we defer it.
 
     To set up observability:
     1. Get your connection string from Azure Portal or via:
@@ -1009,9 +1013,20 @@ async def _setup_foundry_observability_if_needed() -> None:
     2. Add to .env file:
        APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=...;IngestionEndpoint=..."
     """
-    from agent.observability import initialize_observability
+    import os
+    import threading
 
-    initialize_observability()
+    # Only initialize if user has opted in (connection string or OTLP endpoint set)
+    if os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING") or os.getenv("OTLP_ENDPOINT"):
+        from agent.observability import initialize_observability
+
+        # Run in background thread to avoid blocking startup
+        # Azure Monitor exporter initialization takes 4-7 seconds to connect
+        def init_in_background():
+            initialize_observability()
+
+        thread = threading.Thread(target=init_in_background, daemon=True)
+        thread.start()
 
 
 async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
