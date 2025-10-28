@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.13](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.12...osdu-agent-v0.1.13) (2025-10-28)
+
+
+### Performance Improvements
+
+* **observability:** remove auto-discovery for faster startup ([#38](https://github.com/danielscholl/osdu-agent/issues/38)) ([209a2c0](https://github.com/danielscholl/osdu-agent/commit/209a2c07ecf536b44878e355cc2ee4683bc8b15f))
+
 ## [0.1.12](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.11...osdu-agent-v0.1.12) (2025-10-28)
 
 
