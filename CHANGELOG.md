@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.9](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.8...osdu-agent-v0.1.9) (2025-10-28)
+
+
+### Features
+
+* **observability:** defer initialization to allow Azure AI Foundry auto-discovery ([#31](https://github.com/danielscholl/osdu-agent/issues/31)) ([d49f81c](https://github.com/danielscholl/osdu-agent/commit/d49f81ceba9fbb57ee85e110ed5acf9d9e99a9ae))
+
+
+### Bug Fixes
+
+* **os:** resolve Windows compatibility issues ([#28](https://github.com/danielscholl/osdu-agent/issues/28)) ([babe5e8](https://github.com/danielscholl/osdu-agent/commit/babe5e8bb8d58c27e62bc2f8227453101e41e6a7))
+
 ## [0.1.8](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.7...osdu-agent-v0.1.8) (2025-10-28)
 
 
