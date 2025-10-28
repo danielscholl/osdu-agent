@@ -236,11 +236,11 @@ def _render_prompt_area(config: AgentConfig) -> None:
     spacing = " " * max(0, available_space)
 
     # Check observability status for dot color indicator
-    # Green = observability active (configured + initialized), dim = inactive
-    dot_color = "green" if is_observability_active() else "dim"
+    # Green = observability active (configured + initialized), red = inactive
+    dot_color = "green" if is_observability_active() else "red"
 
     # Apply color markup to right content (model and version in cyan)
-    # Dot color indicates observability status: green = active, dim = inactive
+    # Dot color indicates observability status: green = active, red = inactive
     # Parse the right_content to colorize: "gpt-5-mini · v0.1.5"
     parts = right_content.split(" · ")
     if len(parts) == 2:
@@ -996,53 +996,19 @@ def format_auto_detection_message(services: List[str], config: Optional[AgentCon
 
 async def _setup_foundry_observability_if_needed() -> None:
     """
-    Set up Azure AI Foundry observability if configured, then initialize observability.
+    Initialize observability if configured via environment variables.
 
-    This automatically fetches the Application Insights connection string from
-    the Azure AI Foundry project, so users don't need to configure it manually.
+    Requires APPLICATIONINSIGHTS_CONNECTION_STRING or OTLP_ENDPOINT to be set in environment.
 
-    Supports:
-        - AZURE_AI_PROJECT_CONNECTION_STRING: Auto-fetches App Insights connection string
-        - APPLICATIONINSIGHTS_CONNECTION_STRING: Direct connection string (no auto-discovery)
-        - AZURE_AI_PROJECT_ENDPOINT: Project endpoint (requires connection string format)
+    Note: Auto-discovery of Application Insights connection string from AZURE_AI_PROJECT_CONNECTION_STRING
+    has been removed due to startup performance issues (10-20 second Azure API delays).
 
-    This function is called early in CLI startup to ensure observability is initialized
-    AFTER auto-discovery completes, allowing users to set only AZURE_AI_PROJECT_CONNECTION_STRING
-    in their global environment (~/.zshenv) without needing to manually fetch App Insights details.
+    To set up observability:
+    1. Get your connection string from Azure Portal or via:
+       az monitor app-insights component show --app <name> --resource-group <rg> --query connectionString -o tsv
+    2. Add to .env file:
+       APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=...;IngestionEndpoint=..."
     """
-    import os
-
-    # Try auto-discovery if AZURE_AI_PROJECT_CONNECTION_STRING or AZURE_AI_PROJECT_ENDPOINT is set
-    if not os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING") and (
-        os.getenv("AZURE_AI_PROJECT_ENDPOINT") or os.getenv("AZURE_AI_PROJECT_CONNECTION_STRING")
-    ):
-        try:
-            from agent.observability import setup_azure_ai_foundry_observability
-
-            result = await setup_azure_ai_foundry_observability()
-            if result:
-                # Install user/session span processor after Foundry setup
-                from agent.observability import UserSessionSpanProcessor
-                from opentelemetry import trace
-                from opentelemetry.sdk.trace import TracerProvider
-
-                tracer_provider = trace.get_tracer_provider()
-                if isinstance(tracer_provider, TracerProvider):
-                    processor = UserSessionSpanProcessor()
-                    tracer_provider.add_span_processor(processor)  # type: ignore[arg-type]
-                    import logging
-
-                    logger = logging.getLogger(__name__)
-                    logger.info("  User/session span processor installed")
-
-        except Exception as e:
-            import logging
-
-            logger = logging.getLogger(__name__)
-            logger.warning(f"Azure AI Foundry observability setup failed: {e}")
-
-    # Now initialize observability with whatever configuration is available
-    # (either auto-discovered or from environment variables)
     from agent.observability import initialize_observability
 
     initialize_observability()
