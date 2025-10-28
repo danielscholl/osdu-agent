@@ -4,7 +4,7 @@ import asyncio
 import logging
 from collections import defaultdict
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, cast
 
 from agent.config import AgentConfig
 from agent.gitlab.direct_client import GitLabDirectClient
@@ -64,7 +64,8 @@ class GitLabContributionAnalyzer:
                 logger.error(f"Error analyzing {project_path}: {result}")
                 continue
 
-            project_stats = result
+            # Type narrowing - result is ProjectStats (not BaseException)
+            project_stats = cast(ProjectStats, result)
             period_stats.project_breakdown[project_path] = project_stats
 
             # Aggregate contributions
@@ -73,7 +74,7 @@ class GitLabContributionAnalyzer:
             )
 
         # Count unique contributors across all projects
-        all_contributors = set()
+        all_contributors: set[str] = set()
         for project_stats in period_stats.project_breakdown.values():
             all_contributors.update(project_stats.contributions.contributors.keys())
         period_stats.contributions.active_contributors = len(all_contributors)
@@ -123,19 +124,20 @@ class GitLabContributionAnalyzer:
             if author != "unknown":
                 contributors[author]["mrs"] += 1
 
+            # Get MR IID
+            mr_iid = mr.get("iid")
+            if not mr_iid:
+                continue
+
             # Fetch approvals (formal GitLab approvals - identifies maintainers)
-            approved_by = await self.client.get_merge_request_approvals(
-                project_path, mr.get("iid")
-            )
+            approved_by = await self.client.get_merge_request_approvals(project_path, mr_iid)
             for approver_username in approved_by:
                 if approver_username and approver_username != "unknown":
                     contributions.approvals += 1
                     contributors[approver_username]["approvals"] += 1
 
             # Fetch discussions for comment tracking
-            discussions = await self.client.get_merge_request_discussions(
-                project_path, mr.get("iid")
-            )
+            discussions = await self.client.get_merge_request_discussions(project_path, mr_iid)
 
             for discussion in discussions:
                 # Skip system notes
@@ -188,7 +190,9 @@ class GitLabContributionAnalyzer:
                 logger.error(f"Error analyzing ADRs: {result}")
                 continue
 
-            for adr in result:
+            # Type narrowing - result is List[Dict] (not BaseException)
+            adr_list = cast(List[Dict], result)
+            for adr in adr_list:
                 # Deduplicate by IID
                 adr_iid = adr.get("iid")
                 if adr_iid in seen_adr_iids:
@@ -205,6 +209,10 @@ class GitLabContributionAnalyzer:
                         if end_date and created_date > end_date:
                             continue
                     except (ValueError, AttributeError):
+                        # Ignore ADRs with malformed or missing created_at date
+                        logger.debug(
+                            f"Skipping ADR {adr_iid} with invalid created_at: {created_at}"
+                        )
                         pass
 
                 adr_stats.total_adrs += 1
@@ -267,7 +275,7 @@ class GitLabContributionAnalyzer:
         return all_adrs
 
     async def analyze_trends(
-        self, project_paths: List[str], periods: List[tuple[datetime, datetime]]
+        self, project_paths: List[str], periods: List[Tuple[datetime, datetime]]
     ) -> List[PeriodStats]:
         """
         Analyze contribution trends across multiple time periods.
@@ -288,12 +296,14 @@ class GitLabContributionAnalyzer:
         period_results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Filter out errors
-        valid_periods = []
+        valid_periods: List[PeriodStats] = []
         for i, result in enumerate(period_results):
             if isinstance(result, Exception):
                 logger.error(f"Error analyzing period {i}: {result}")
                 continue
-            valid_periods.append(result)
+            # Type narrowing - result is PeriodStats (not BaseException)
+            period_stat = cast(PeriodStats, result)
+            valid_periods.append(period_stat)
 
         return valid_periods
 

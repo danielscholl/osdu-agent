@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class ReportMode(str, Enum):
@@ -60,7 +60,7 @@ class ADRStats:
     participants: int = 0
     authored_count: int = 0
     comments_count: int = 0
-    adr_details: List[Dict[str, any]] = field(default_factory=list)
+    adr_details: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass

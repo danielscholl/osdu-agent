@@ -520,9 +520,7 @@ class GitLabDirectClient:
             logger.warning(f"Error fetching discussions for MR !{mr_iid}: {e}")
             return []
 
-    async def get_merge_request_approvals(
-        self, project_path: str, mr_iid: int
-    ) -> List[str]:
+    async def get_merge_request_approvals(self, project_path: str, mr_iid: int) -> List[str]:
         """
         Get approvals for a merge request.
 
@@ -631,7 +629,9 @@ class GitLabDirectClient:
                 "updated_at": issue.updated_at if hasattr(issue, "updated_at") else None,
                 "upvotes": issue.upvotes if hasattr(issue, "upvotes") else 0,
                 "downvotes": issue.downvotes if hasattr(issue, "downvotes") else 0,
-                "user_notes_count": issue.user_notes_count if hasattr(issue, "user_notes_count") else 0,
+                "user_notes_count": (
+                    issue.user_notes_count if hasattr(issue, "user_notes_count") else 0
+                ),
             }
         )
         return base_data

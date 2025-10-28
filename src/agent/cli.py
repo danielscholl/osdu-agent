@@ -679,7 +679,11 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         mode_days_args = []
 
         # Check if first arg is a service name
-        if len(parts) >= 2 and not parts[1].isdigit() and parts[1] not in ["adr", "trends", "contributions", "compare"]:
+        if (
+            len(parts) >= 2
+            and not parts[1].isdigit()
+            and parts[1] not in ["adr", "trends", "contributions", "compare"]
+        ):
             services_arg = parts[1]
             mode_days_args = parts[2:]
         else:
@@ -695,7 +699,9 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
                 return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
+            console.print(
+                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+            )
             console.print()
 
         # Parse services
@@ -2251,7 +2257,9 @@ async def async_main(args: Optional[list[str]] = None) -> int:
                 return 1
 
             # Display auto-detection message
-            console.print(f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]")
+            console.print(
+                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+            )
             console.print()
 
         # Parse services

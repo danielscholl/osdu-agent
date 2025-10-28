@@ -141,10 +141,9 @@ async def run_report_workflow(
             # Auto-detect services if not provided
             if services is None:
                 formatter.print_info("Auto-detecting available services...")
-                from agent.copilot.runners.status_runner import StatusRunner
+                from agent.cli import detect_available_services
 
-                runner = StatusRunner(None, [], None)
-                services = await runner._detect_services_from_config(config)
+                services = await detect_available_services(config)
 
                 if not services:
                     formatter.print_error("No services found in configuration")
@@ -238,7 +237,7 @@ async def run_report_workflow(
             await store.store(result)
 
             # Record metrics
-            record_workflow_run("report", True, duration)
+            record_workflow_run("report", duration, "success", len(services))
 
             formatter.print_success(f"Report generated in {duration:.2f}s")
             return result
@@ -248,7 +247,7 @@ async def run_report_workflow(
             formatter.print_error(f"Report generation failed: {str(e)}")
 
             duration = asyncio.get_event_loop().time() - start_time
-            record_workflow_run("report", False, duration)
+            record_workflow_run("report", duration, "error", len(services) if services else 0)
 
             return WorkflowResult(
                 workflow_type="report",

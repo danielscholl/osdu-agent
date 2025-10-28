@@ -1,7 +1,7 @@
 """Tests for GitLab data models."""
 
-import pytest
 from datetime import datetime
+
 from agent.gitlab.models import (
     ContributionStats,
     ADRStats,

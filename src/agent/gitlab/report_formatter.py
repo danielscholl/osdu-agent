@@ -1,6 +1,6 @@
 """Report formatting with Rich console output for GitLab analytics."""
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from rich.console import Console
 from rich.panel import Panel
@@ -46,7 +46,7 @@ class ReportFormatter:
         if mode == "compare" and periods > 1:
             header_lines.append(f"[bold]Comparison:[/bold] Current vs {periods} previous periods")
         elif mode == "trends":
-            header_lines.append(f"[bold]Trends:[/bold]     12 months")
+            header_lines.append("[bold]Trends:[/bold]     12 months")
 
         # Display panel
         panel = Panel(
@@ -217,7 +217,9 @@ class ReportFormatter:
         # Weight approvals higher (2x) as they identify maintainers
         sorted_contributors = sorted(
             contributions.contributors.items(),
-            key=lambda x: x[1].get("mrs", 0) + x[1].get("comments", 0) + x[1].get("approvals", 0) * 2,
+            key=lambda x: x[1].get("mrs", 0)
+            + x[1].get("comments", 0)
+            + x[1].get("approvals", 0) * 2,
             reverse=True,
         )
 
@@ -268,7 +270,7 @@ class ReportFormatter:
         self.console.print(table)
         self.console.print()
 
-    def format_adr_analysis(self, adr_stats_list: List[tuple[str, ADRStats]]) -> None:
+    def format_adr_analysis(self, adr_stats_list: List[Tuple[str, ADRStats]]) -> None:
         """
         Format and display ADR analysis table.
 

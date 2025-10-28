@@ -1,9 +1,12 @@
 """Tests for report workflow."""
 
-import pytest
-from datetime import datetime, timedelta
-from agent.workflows.report_workflow import _parse_report_arguments, _calculate_period_dates
+from datetime import datetime
+
 from agent.gitlab.models import ReportMode
+from agent.workflows.report_workflow import (
+    _calculate_period_dates,
+    _parse_report_arguments,
+)
 
 
 def test_parse_report_arguments_default():
