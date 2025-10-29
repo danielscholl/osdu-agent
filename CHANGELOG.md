@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.18](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.17...osdu-agent-v0.1.18) (2025-10-29)
+
+
+### Features
+
+* **copilot:** add automatic OSDU workflow execution for storage validation ([#48](https://github.com/danielscholl/osdu-agent/issues/48)) ([a00b2b9](https://github.com/danielscholl/osdu-agent/commit/a00b2b9c19e682f73f59742ed521eb938fa49cf3))
+
 ## [0.1.17](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.16...osdu-agent-v0.1.17) (2025-10-29)
 
 
