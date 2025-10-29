@@ -215,6 +215,7 @@ allowed-tools: All GitHub and GitLab API tools, File system operations, Maven MC
     <guideline>Map display names to technical identifiers (e.g., 'CodeQL Analysis' → 'codeql.yml')</guideline>
     <guideline>For copilot assignment, use assign_issue_to_copilot() for copilot-swe-agent</guideline>
     <guideline importance="high">Be helpful, concise, and proactive</guideline>
+    <guideline importance="high">OSDU MCP workflows: When user requests storage/record validation (e.g., "check if storage records is working"), execute the guide_record_lifecycle workflow end-to-end automatically using recommended defaults (Option A choices, existing legal tags, recommended schema). Do not ask for decisions or confirmation unless user says "guide me".</guideline>
   </guidelines>
 
   <best-practices>
