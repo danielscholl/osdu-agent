@@ -1077,19 +1077,15 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
     # Initialize OSDU MCP if enabled
     osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
 
-    # Initialize MCP servers in parallel for faster startup
-    # Handle cleanup manually to avoid AsyncExitStack issues with parallel init
-    try:
-        # Start both MCP servers concurrently
-        mcp_init_tasks = [maven_mcp.__aenter__()]
-        if osdu_mcp:
-            mcp_init_tasks.append(osdu_mcp.__aenter__())
+    # Use AsyncExitStack to manage optional OSDU MCP context
+    async with AsyncExitStack() as stack:
+        # Always enter Maven MCP context
+        await stack.enter_async_context(maven_mcp)
 
-        # Wait for all MCP servers to initialize
-        await asyncio.gather(*mcp_init_tasks, return_exceptions=False)
-
-        # Combine tools from both MCP servers
+        # Conditionally enter OSDU MCP context if enabled
         if osdu_mcp:
+            await stack.enter_async_context(osdu_mcp)
+            # Combine tools from both MCP servers
             all_mcp_tools = maven_mcp.tools + osdu_mcp.tools
         else:
             # Only Maven MCP tools
@@ -1351,20 +1347,6 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
             except Exception as exc:  # pylint: disable=broad-except
                 console.print(f"\n[red]Error:[/red] {exc}\n", style="bold red")
 
-    finally:
-        # Cleanup MCP servers
-        # Suppress cancel scope errors from parallel initialization (servers still clean up properly)
-        try:
-            if osdu_mcp:
-                await osdu_mcp.__aexit__(None, None, None)
-        except Exception:
-            pass  # Harmless cancel scope error from parallel init
-
-        try:
-            await maven_mcp.__aexit__(None, None, None)
-        except Exception:
-            pass  # Harmless cancel scope error from parallel init
-
     return 0
 
 
@@ -1425,19 +1407,15 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
     # Initialize OSDU MCP if enabled
     osdu_mcp = OsduMCPManager(config) if config.osdu_mcp_enabled else None
 
-    # Initialize MCP servers in parallel for faster startup
-    # Handle cleanup manually to avoid AsyncExitStack issues with parallel init
-    try:
-        # Start both MCP servers concurrently
-        mcp_init_tasks = [maven_mcp.__aenter__()]
-        if osdu_mcp:
-            mcp_init_tasks.append(osdu_mcp.__aenter__())
+    # Use AsyncExitStack to manage optional OSDU MCP context
+    async with AsyncExitStack() as stack:
+        # Always enter Maven MCP context
+        await stack.enter_async_context(maven_mcp)
 
-        # Wait for all MCP servers to initialize
-        await asyncio.gather(*mcp_init_tasks, return_exceptions=False)
-
-        # Combine tools from both MCP servers
+        # Conditionally enter OSDU MCP context if enabled
         if osdu_mcp:
+            await stack.enter_async_context(osdu_mcp)
+            # Combine tools from both MCP servers
             all_mcp_tools = maven_mcp.tools + osdu_mcp.tools
         else:
             # Only Maven MCP tools
@@ -1560,20 +1538,6 @@ async def run_single_query(prompt: str, quiet: bool = False, verbose: bool = Fal
 
                 emitter = get_event_emitter()
                 emitter.set_interactive_mode(False, False)
-
-    finally:
-        # Cleanup MCP servers (outer try block)
-        # Suppress cancel scope errors from parallel initialization (servers still clean up properly)
-        try:
-            if osdu_mcp:
-                await osdu_mcp.__aexit__(None, None, None)
-        except Exception:
-            pass  # Harmless cancel scope error from parallel init
-
-        try:
-            await maven_mcp.__aexit__(None, None, None)
-        except Exception:
-            pass  # Harmless cancel scope error from parallel init
 
 
 def _get_version() -> str:
