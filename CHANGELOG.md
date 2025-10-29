@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.17](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.16...osdu-agent-v0.1.17) (2025-10-29)
+
+
+### Bug Fixes
+
+* suppress Azure Monitor SDK warnings in interactive mode ([#46](https://github.com/danielscholl/osdu-agent/issues/46)) ([3295a53](https://github.com/danielscholl/osdu-agent/commit/3295a539b163fabb16bd7008cb42ce009a20d1e3))
+
 ## [0.1.16](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.15...osdu-agent-v0.1.16) (2025-10-29)
 
 
