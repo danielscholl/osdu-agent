@@ -99,6 +99,13 @@ async def run_depends_workflow(
                     "status": status,
                 }
 
+            # Get dependency analysis from runner if available
+            dependency_analysis = ""
+            if hasattr(runner, "full_output") and runner.full_output:
+                # Extract dependency analysis from full output
+                full_output_text = "\n".join(runner.full_output)
+                dependency_analysis = full_output_text
+
             # Build detailed results
             detailed_results = {
                 "exit_code": exit_code,
@@ -132,11 +139,9 @@ async def run_depends_workflow(
                 status="success" if exit_code == 0 else "error",
                 summary=summary,
                 detailed_results=detailed_results,
+                dependency_updates=dependency_updates_by_service,
+                dependency_analysis=dependency_analysis,
             )
-
-            # Add dependency_updates field to result (custom field)
-            # Note: WorkflowResult doesn't have this field, but we can add it to detailed_results
-            result.detailed_results["dependency_updates"] = dependency_updates_by_service
 
             # Store result for agent context
             result_store = get_result_store()

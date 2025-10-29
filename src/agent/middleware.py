@@ -267,7 +267,7 @@ async def workflow_context_agent_middleware(
         enhanced_context = f"""{context_summary}
 
 **IMPORTANT INSTRUCTION:**
-When the user asks about recent workflow results (tests, vulns, status, fork),
+When the user asks about recent workflow results (tests, vulns, depends, status, fork),
 YOU MUST reference the workflow results shown above. DO NOT call GitHub tools
 to fetch information that is already available in these results.
 
@@ -275,6 +275,14 @@ For example:
 - "what was the grade?" → Reference the Grade from Test Results above
 - "what CVEs did you find?" → Reference the Vulnerabilities from vulnerability scan results above
 - "how many tests passed?" → Reference the Test Results above
+- "which patches reduce vulnerabilities?" → Cross-reference Dependency Analysis patch updates with CVE Analysis to identify low-risk fixes
+- "what dependencies need updates?" → Reference the Dependency Updates section above
+
+**CROSS-REFERENCING WORKFLOWS:**
+If both /vulns and /depends results are available, you can correlate them:
+- CVE Analysis shows which packages have vulnerabilities and required versions
+- Dependency Analysis shows which updates are available (patch/minor/major)
+- Match package names to identify which dependency updates will fix which CVEs
 
 Always check this context FIRST before calling any tools."""
 

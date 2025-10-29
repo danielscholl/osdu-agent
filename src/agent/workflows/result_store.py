@@ -18,7 +18,7 @@ class WorkflowResult:
     """Result from a workflow execution.
 
     Attributes:
-        workflow_type: Type of workflow (vulns, test, status, fork)
+        workflow_type: Type of workflow (vulns, test, status, fork, depends)
         timestamp: When the workflow was executed
         services: List of services processed
         status: Overall status (success, error, partial)
@@ -29,6 +29,8 @@ class WorkflowResult:
         test_results: Test execution results (test-specific)
         pr_status: Pull request status information (status-specific)
         fork_status: Fork operation status (fork-specific)
+        dependency_updates: Dependency update counts by service (depends-specific)
+        dependency_analysis: Dependency update analysis report (depends-specific)
     """
 
     workflow_type: str
@@ -38,7 +40,7 @@ class WorkflowResult:
     summary: str
     detailed_results: Dict[str, Any]
 
-    # Triage-specific fields
+    # Vulns-specific fields
     vulnerabilities: Optional[Dict[str, Dict[str, int]]] = None
     cve_analysis: Optional[str] = None
 
@@ -50,6 +52,10 @@ class WorkflowResult:
 
     # Fork-specific fields
     fork_status: Optional[Dict[str, str]] = None
+
+    # Depends-specific fields
+    dependency_updates: Optional[Dict[str, Dict[str, int]]] = None
+    dependency_analysis: Optional[str] = None
 
 
 class WorkflowResultStore:
@@ -157,11 +163,39 @@ class WorkflowResultStore:
                 if result.cve_analysis:
                     lines.append("")
                     lines.append("**CVE Analysis Summary:**")
-                    # Extract first few lines of CVE analysis for context
-                    cve_lines = result.cve_analysis.split("\n")[:10]
-                    lines.extend([f"  {line}" for line in cve_lines if line.strip()])
-                    if len(result.cve_analysis.split("\n")) > 10:
-                        lines.append("  *(Full analysis available in detailed results)*")
+                    # Extract critical/high CVE details and remediation steps
+                    analysis_lines = result.cve_analysis.split("\n")
+
+                    # Find service-specific CVE section (most actionable)
+                    in_cve_section = False
+                    cve_section_lines = []
+                    for line in analysis_lines:
+                        if "SERVICE-SPECIFIC CRITICAL/HIGH CVEs" in line:
+                            in_cve_section = True
+                        elif "### 3. IMMEDIATE ACTION ITEMS" in line:
+                            # Also include action items
+                            in_cve_section = True
+                        elif line.startswith("###") and in_cve_section and "SERVICE-SPECIFIC" not in line and "IMMEDIATE ACTION" not in line:
+                            # End of relevant sections
+                            break
+
+                        if in_cve_section:
+                            cve_section_lines.append(line)
+
+                    # Include CVE section if found (up to 50 lines), otherwise first 20 lines
+                    if cve_section_lines:
+                        for line in cve_section_lines[:50]:
+                            if line.strip():
+                                lines.append(f"  {line}")
+                        if len(cve_section_lines) > 50:
+                            lines.append("  *(Full analysis available in detailed results)*")
+                    else:
+                        # Fallback: show first 20 lines
+                        for line in analysis_lines[:20]:
+                            if line.strip():
+                                lines.append(f"  {line}")
+                        if len(analysis_lines) > 20:
+                            lines.append("  *(Full analysis available in detailed results)*")
 
             elif result.workflow_type == "test" and result.test_results:
                 lines.append("")
@@ -188,6 +222,52 @@ class WorkflowResultStore:
                         result_parts.append(f"**Grade: {quality_grade}**")
 
                     lines.append(f"- {svc}: {', '.join(result_parts)}")
+
+            elif result.workflow_type == "depends" and result.dependency_updates:
+                lines.append("")
+                lines.append("**Dependency Updates:**")
+                for svc, counts in result.dependency_updates.items():
+                    major = counts.get("major_updates", 0)
+                    minor = counts.get("minor_updates", 0)
+                    patch = counts.get("patch_updates", 0)
+                    total = counts.get("total_dependencies", 0)
+                    outdated = counts.get("outdated_dependencies", 0)
+                    lines.append(f"- {svc}: {major}M / {minor}m / {patch}p updates ({outdated}/{total} outdated)")
+
+                # Include dependency analysis if available (first 30 lines for patch recommendations)
+                if result.dependency_analysis:
+                    lines.append("")
+                    lines.append("**Dependency Analysis Summary:**")
+                    # Extract patch updates section and other key parts
+                    analysis_lines = result.dependency_analysis.split("\n")
+
+                    # Find and include patch updates section (most relevant for low-risk fixes)
+                    in_patch_section = False
+                    patch_lines = []
+                    for line in analysis_lines:
+                        if "## PATCH UPDATES" in line or "PATCH UPDATES" in line:
+                            in_patch_section = True
+                        elif line.startswith("##") and in_patch_section:
+                            # End of patch section
+                            break
+
+                        if in_patch_section:
+                            patch_lines.append(line)
+
+                    # Include patch section if found, otherwise first 30 lines
+                    if patch_lines:
+                        for line in patch_lines[:40]:  # Limit to 40 lines
+                            if line.strip():
+                                lines.append(f"  {line}")
+                        if len(patch_lines) > 40:
+                            lines.append("  *(Full analysis available in detailed results)*")
+                    else:
+                        # Fallback: show first 30 lines
+                        for line in analysis_lines[:30]:
+                            if line.strip():
+                                lines.append(f"  {line}")
+                        if len(analysis_lines) > 30:
+                            lines.append("  *(Full analysis available in detailed results)*")
 
             elif result.workflow_type == "status" and result.pr_status:
                 lines.append("")
