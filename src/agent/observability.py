@@ -17,9 +17,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Suppress Azure Monitor statsbeat re-initialization warnings
-# These are harmless and occur due to parallel MCP initialization
+# Suppress Azure Monitor SDK warnings and debug output
+# These are harmless and occur due to OneSettings connection timeouts and parallel MCP initialization
 logging.getLogger("azure.monitor.opentelemetry.exporter.statsbeat._manager").setLevel(logging.ERROR)
+logging.getLogger("azure.monitor.opentelemetry.exporter._configuration._utils").setLevel(
+    logging.ERROR
+)
+logging.getLogger("azure.monitor.opentelemetry.exporter._configuration").setLevel(logging.ERROR)
 
 # Set default service name for OpenTelemetry if not already configured
 os.environ.setdefault("OTEL_SERVICE_NAME", "osdu-agent")
