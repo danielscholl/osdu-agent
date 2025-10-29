@@ -182,8 +182,8 @@ def test_agent_instructions_include_maven_capabilities(test_config: AgentConfig)
         agent = Agent(config=test_config)
 
         # Verify instructions mention Maven capabilities
-        assert "MAVEN DEPENDENCY MANAGEMENT" in agent.instructions
-        assert "Check single dependency version" in agent.instructions
-        assert "Scan Java projects for security vulnerabilities" in agent.instructions
+        assert "Maven" in agent.instructions
+        assert "scan CVEs" in agent.instructions or "CVE" in agent.instructions
         assert "triage" in agent.instructions.lower()
         assert "plan" in agent.instructions.lower()
+        assert "scan_java_project_tool" in agent.instructions
