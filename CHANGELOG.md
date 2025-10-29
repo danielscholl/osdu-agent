@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.15](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.14...osdu-agent-v0.1.15) (2025-10-29)
+
+
+### Code Refactoring
+
+* **cli:** simplify MCP context management with AsyncExitStack ([#42](https://github.com/danielscholl/osdu-agent/issues/42)) ([ead7d88](https://github.com/danielscholl/osdu-agent/commit/ead7d88f9385b3fb1948ca14be352b94ee5efd45))
+
 ## [0.1.14](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.13...osdu-agent-v0.1.14) (2025-10-28)
 
 
