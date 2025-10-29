@@ -693,6 +693,120 @@ def test_add_pr_comment_empty(
     assert "Cannot add empty comment" in result
 
 
+def test_is_pull_request_approved_success(
+    test_config: AgentConfig,
+    mock_github: Mock,
+    mock_github_repo_with_pr: Mock,
+    mock_github_pr: Mock,
+):
+    """Test PR approval check with approved PR."""
+    # Mock reviews with approvals
+    mock_review1 = Mock()
+    mock_review1.user = Mock()
+    mock_review1.user.login = "reviewer1"
+    mock_review1.state = "APPROVED"
+
+    mock_review2 = Mock()
+    mock_review2.user = Mock()
+    mock_review2.user.login = "reviewer2"
+    mock_review2.state = "APPROVED"
+
+    mock_github_pr.get_reviews.return_value = [mock_review1, mock_review2]
+
+    tools = GitHubTools(test_config)
+    is_approved, message = tools.is_pull_request_approved(repo="test-repo1", pr_number=123)
+
+    assert is_approved is True
+    assert "approved" in message.lower()
+    assert "2 approval(s)" in message
+
+
+def test_is_pull_request_approved_no_reviews(
+    test_config: AgentConfig,
+    mock_github: Mock,
+    mock_github_repo_with_pr: Mock,
+    mock_github_pr: Mock,
+):
+    """Test PR approval check with no reviews."""
+    mock_github_pr.get_reviews.return_value = []
+
+    tools = GitHubTools(test_config)
+    is_approved, message = tools.is_pull_request_approved(repo="test-repo1", pr_number=123)
+
+    assert is_approved is False
+    assert "no reviews" in message.lower()
+
+
+def test_is_pull_request_approved_changes_requested(
+    test_config: AgentConfig,
+    mock_github: Mock,
+    mock_github_repo_with_pr: Mock,
+    mock_github_pr: Mock,
+):
+    """Test PR approval check with changes requested."""
+    # Mock reviews with approval and change request
+    mock_review1 = Mock()
+    mock_review1.user = Mock()
+    mock_review1.user.login = "reviewer1"
+    mock_review1.state = "APPROVED"
+
+    mock_review2 = Mock()
+    mock_review2.user = Mock()
+    mock_review2.user.login = "reviewer2"
+    mock_review2.state = "CHANGES_REQUESTED"
+
+    mock_github_pr.get_reviews.return_value = [mock_review1, mock_review2]
+
+    tools = GitHubTools(test_config)
+    is_approved, message = tools.is_pull_request_approved(repo="test-repo1", pr_number=123)
+
+    assert is_approved is False
+    assert "change request(s)" in message.lower()
+
+
+def test_is_pull_request_approved_reviewer_updated(
+    test_config: AgentConfig,
+    mock_github: Mock,
+    mock_github_repo_with_pr: Mock,
+    mock_github_pr: Mock,
+):
+    """Test PR approval check where reviewer updates their review."""
+    # Mock reviews where same reviewer first requests changes, then approves
+    mock_review1 = Mock()
+    mock_review1.user = Mock()
+    mock_review1.user.login = "reviewer1"
+    mock_review1.state = "CHANGES_REQUESTED"
+
+    mock_review2 = Mock()
+    mock_review2.user = Mock()
+    mock_review2.user.login = "reviewer1"
+    mock_review2.state = "APPROVED"
+
+    # Reviews are processed in order, so latest review wins
+    mock_github_pr.get_reviews.return_value = [mock_review1, mock_review2]
+
+    tools = GitHubTools(test_config)
+    is_approved, message = tools.is_pull_request_approved(repo="test-repo1", pr_number=123)
+
+    assert is_approved is True
+    assert "approved" in message.lower()
+    assert "1 approval(s)" in message
+
+
+def test_is_pull_request_approved_not_found(
+    test_config: AgentConfig, mock_github: Mock, mock_github_repo: Mock
+):
+    """Test PR approval check with non-existent PR."""
+    error_data = {"message": "Not Found"}
+    mock_github_repo.get_pull.side_effect = GithubException(404, error_data)
+
+    tools = GitHubTools(test_config)
+    is_approved, message = tools.is_pull_request_approved(repo="test-repo1", pr_number=999)
+
+    assert is_approved is False
+    assert "not found" in message.lower()
+
+
 # ============ WORKFLOW TESTS ============
 
 

@@ -514,10 +514,12 @@ class TestSendPRToGitLab:
     @patch("agent.workflows.send_workflow.create_mr_branch_from_upstream")
     @patch("agent.workflows.send_workflow.get_pr_commits")
     @patch("agent.workflows.send_workflow.ensure_upstream_configured")
+    @patch("agent.workflows.send_workflow.PullRequestTools")
     @patch("agent.workflows.send_workflow.extract_pr_data")
     def test_send_pr_to_gitlab_success(
         self,
         mock_extract,
+        mock_pr_tools,
         mock_ensure_upstream,
         mock_get_commits,
         mock_create_branch,
@@ -537,6 +539,15 @@ class TestSendPRToGitLab:
             "head_ref": "feature/test",
             "html_url": "https://github.com/test-org/partition/pull/5",
         }
+
+        # Mock PR approval check (approved)
+        mock_pr_instance = Mock()
+        mock_pr_instance.is_pull_request_approved.return_value = (
+            True,
+            "PR #5 is approved (1 approval(s))",
+        )
+        mock_pr_tools.return_value = mock_pr_instance
+
         mock_ensure_upstream.return_value = (True, "Configured")
         mock_get_commits.return_value = ["abc123", "def456"]
         mock_create_branch.return_value = (True, "gitlab-mr-5")
@@ -564,6 +575,63 @@ class TestSendPRToGitLab:
 
         assert "Error" in result
         assert "not found" in result
+
+    @patch("agent.workflows.send_workflow.PullRequestTools")
+    @patch("agent.workflows.send_workflow.extract_pr_data")
+    def test_send_pr_to_gitlab_not_approved(self, mock_extract, mock_pr_tools, mock_config):
+        """Test when PR is not approved."""
+        # Setup mocks
+        mock_extract.return_value = {
+            "number": 5,
+            "title": "Test PR",
+            "body": "Test description",
+            "base_ref": "main",
+            "head_ref": "feature/test",
+            "html_url": "https://github.com/test-org/partition/pull/5",
+        }
+
+        # Mock PR approval check (not approved)
+        mock_pr_instance = Mock()
+        mock_pr_instance.is_pull_request_approved.return_value = (
+            False,
+            "PR #5 has no approvals (total reviews: 2)",
+        )
+        mock_pr_tools.return_value = mock_pr_instance
+
+        result = send_pr_to_gitlab("partition", 5, mock_config)
+
+        assert "Error" in result
+        assert "must be approved first" in result
+        assert "PR #5 has no approvals" in result
+        assert "https://github.com/test-org/partition/pull/5" in result
+
+    @patch("agent.workflows.send_workflow.PullRequestTools")
+    @patch("agent.workflows.send_workflow.extract_pr_data")
+    def test_send_pr_to_gitlab_changes_requested(self, mock_extract, mock_pr_tools, mock_config):
+        """Test when PR has outstanding change requests."""
+        # Setup mocks
+        mock_extract.return_value = {
+            "number": 5,
+            "title": "Test PR",
+            "body": "Test description",
+            "base_ref": "main",
+            "head_ref": "feature/test",
+            "html_url": "https://github.com/test-org/partition/pull/5",
+        }
+
+        # Mock PR approval check (changes requested)
+        mock_pr_instance = Mock()
+        mock_pr_instance.is_pull_request_approved.return_value = (
+            False,
+            "PR #5 has 1 change request(s) and 0 approval(s)",
+        )
+        mock_pr_tools.return_value = mock_pr_instance
+
+        result = send_pr_to_gitlab("partition", 5, mock_config)
+
+        assert "Error" in result
+        assert "must be approved first" in result
+        assert "change request(s)" in result
 
 
 class TestSendIssueToGitLab:

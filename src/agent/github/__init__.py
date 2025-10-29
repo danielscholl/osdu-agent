@@ -128,6 +128,10 @@ class GitHubTools:
         """Add a comment to a pull request discussion."""
         return self._pull_requests.add_pr_comment(*args, **kwargs)
 
+    def is_pull_request_approved(self, *args: Any, **kwargs: Any) -> Any:
+        """Check if a pull request has been approved."""
+        return self._pull_requests.is_pull_request_approved(*args, **kwargs)
+
     # ============ WORKFLOWS/ACTIONS ============
 
     def list_workflows(self, *args: Any, **kwargs: Any) -> Any:

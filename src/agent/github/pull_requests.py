@@ -538,3 +538,70 @@ class PullRequestTools(GitHubToolsBase):
             return f"GitHub API error: {e.data.get('message', str(e))}"
         except Exception as e:
             return f"Error adding PR comment: {str(e)}"
+
+    def is_pull_request_approved(
+        self,
+        repo: Annotated[str, Field(description="Repository name (e.g., 'partition')")],
+        pr_number: Annotated[int, Field(description="Pull request number")],
+    ) -> tuple[bool, str]:
+        """
+        Check if a pull request has been approved.
+
+        A PR is considered approved if it has at least one approval review
+        and no outstanding change requests from the latest reviews by each reviewer.
+
+        Args:
+            repo: Repository name
+            pr_number: Pull request number
+
+        Returns:
+            Tuple of (is_approved, message) where:
+            - is_approved: True if PR is approved, False otherwise
+            - message: Descriptive message about approval status
+        """
+        try:
+            repo_full_name = self.config.get_repo_full_name(repo)
+            gh_repo = self.github.get_repo(repo_full_name)
+            pr = gh_repo.get_pull(pr_number)
+
+            # Get all reviews for the PR
+            reviews = list(pr.get_reviews())
+
+            if not reviews:
+                return False, f"PR #{pr_number} has no reviews"
+
+            # Track the latest review state from each reviewer
+            # Key: reviewer login, Value: review state
+            reviewer_states: dict[str, str] = {}
+
+            # Process reviews in order (oldest to newest)
+            for review in reviews:
+                if review.user and review.state:
+                    reviewer_states[review.user.login] = review.state
+
+            # Count approval states
+            approvals = sum(1 for state in reviewer_states.values() if state == "APPROVED")
+            changes_requested = sum(
+                1 for state in reviewer_states.values() if state == "CHANGES_REQUESTED"
+            )
+
+            # PR is approved if:
+            # 1. At least one approval exists
+            # 2. No outstanding change requests from latest reviews
+            if approvals > 0 and changes_requested == 0:
+                return True, f"PR #{pr_number} is approved ({approvals} approval(s))"
+            elif changes_requested > 0:
+                return (
+                    False,
+                    f"PR #{pr_number} has {changes_requested} change request(s) "
+                    f"and {approvals} approval(s)",
+                )
+            else:
+                return False, f"PR #{pr_number} has no approvals (total reviews: {len(reviews)})"
+
+        except GithubException as e:
+            if e.status == 404:
+                return False, f"Pull request #{pr_number} not found in {repo}"
+            return False, f"GitHub API error: {e.data.get('message', str(e))}"
+        except Exception as e:
+            return False, f"Error checking PR approval status: {str(e)}"

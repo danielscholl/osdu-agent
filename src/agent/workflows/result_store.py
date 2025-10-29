@@ -175,7 +175,12 @@ class WorkflowResultStore:
                         elif "### 3. IMMEDIATE ACTION ITEMS" in line:
                             # Also include action items
                             in_cve_section = True
-                        elif line.startswith("###") and in_cve_section and "SERVICE-SPECIFIC" not in line and "IMMEDIATE ACTION" not in line:
+                        elif (
+                            line.startswith("###")
+                            and in_cve_section
+                            and "SERVICE-SPECIFIC" not in line
+                            and "IMMEDIATE ACTION" not in line
+                        ):
                             # End of relevant sections
                             break
 
@@ -232,7 +237,9 @@ class WorkflowResultStore:
                     patch = counts.get("patch_updates", 0)
                     total = counts.get("total_dependencies", 0)
                     outdated = counts.get("outdated_dependencies", 0)
-                    lines.append(f"- {svc}: {major}M / {minor}m / {patch}p updates ({outdated}/{total} outdated)")
+                    lines.append(
+                        f"- {svc}: {major}M / {minor}m / {patch}p updates ({outdated}/{total} outdated)"
+                    )
 
                 # Include dependency analysis if available (first 30 lines for patch recommendations)
                 if result.dependency_analysis:

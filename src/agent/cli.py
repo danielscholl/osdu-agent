@@ -359,9 +359,10 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         if "--platform" in parts:
             platform_idx = parts.index("--platform")
             if platform_idx + 1 < len(parts):
-                platform = parts[platform_idx + 1].lower()
-                if platform not in ["github", "gitlab"]:
-                    return f"Error: Invalid platform '{platform}'. Use 'github' or 'gitlab'"
+                platform_input = parts[platform_idx + 1].lower()
+                if platform_input not in ["github", "gitlab"]:
+                    return f"Error: Invalid platform '{platform_input}'. Use 'github' or 'gitlab'"
+                platform = platform_input  # type: ignore[assignment]
 
         # Parse --provider flag (for GitLab)
         providers = None
