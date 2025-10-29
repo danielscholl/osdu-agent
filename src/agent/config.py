@@ -101,6 +101,93 @@ def _get_gitlab_token() -> Optional[str]:
     return env_token
 
 
+def _get_github_username() -> Optional[str]:
+    """
+    Get GitHub username from CLI or environment variable.
+
+    Priority:
+    1. GitHub CLI (`gh api user`) - if installed and authenticated
+    2. GITHUB_USERNAME environment variable - fallback
+
+    Returns:
+        Optional[str]: GitHub username if available, None otherwise
+    """
+    # Try GitHub CLI first
+    try:
+        result = subprocess.run(
+            ["gh", "api", "user", "--jq", ".login"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0 and result.stdout and result.stdout.strip():
+            username = result.stdout.strip()
+            logger.debug(f"Using GitHub username from gh CLI: {username}")
+            return username
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        # gh CLI not installed or timeout
+        pass
+    except Exception as e:
+        logger.debug(f"Failed to get username from gh CLI: {e}")
+
+    # Fall back to environment variable
+    env_username: Optional[str] = os.getenv("GITHUB_USERNAME")
+    if env_username:
+        logger.debug(f"Using GitHub username from GITHUB_USERNAME env var: {env_username}")
+    else:
+        logger.debug("No GitHub username configured")
+    return env_username
+
+
+def _get_gitlab_username() -> Optional[str]:
+    """
+    Get GitLab username from CLI or environment variable.
+
+    Priority:
+    1. GitLab CLI (`glab auth status`) - if installed and authenticated
+    2. GITLAB_USERNAME environment variable - fallback
+
+    Returns:
+        Optional[str]: GitLab username if available, None otherwise
+    """
+    # Try GitLab CLI first using auth status (more reliable than API call)
+    try:
+        result = subprocess.run(
+            ["glab", "auth", "status"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        # Parse output for "Logged in to ... as <username>"
+        # Example: "✓ Logged in to community.opengroup.org as danielscholl (GITLAB_TOKEN)"
+        if result.stderr:
+            for line in result.stderr.split("\n"):
+                if "Logged in to" in line and " as " in line:
+                    # Extract username between " as " and the next space or "("
+                    parts = line.split(" as ")
+                    if len(parts) >= 2:
+                        # Get everything after " as " and before the next space or "("
+                        username_part = parts[1].split()[0].strip()
+                        # Remove trailing parenthesis or other punctuation
+                        username = username_part.rstrip("(),")
+                        if username and len(username) > 0:
+                            logger.debug(f"Using GitLab username from glab CLI: {username}")
+                            return username
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        # glab CLI not installed or timeout
+        pass
+    except Exception as e:
+        logger.debug(f"Failed to get username from glab CLI: {e}")
+
+    # Fall back to environment variable
+    env_username: Optional[str] = os.getenv("GITLAB_USERNAME")
+    if env_username:
+        logger.debug(f"Using GitLab username from GITLAB_USERNAME env var: {env_username}")
+    else:
+        logger.debug("No GitLab username configured")
+    return env_username
+
+
 @dataclass
 class AgentConfig:
     """
@@ -111,13 +198,16 @@ class AgentConfig:
         repositories: List of repository names to manage
         repos_root: Root directory for cloned repositories
         github_token: GitHub personal access token (optional, can use env var)
+        github_username: GitHub username (fetched from gh CLI or env var)
         gitlab_url: GitLab instance URL (optional, defaults to https://gitlab.com)
         gitlab_token: GitLab personal access token (optional)
+        gitlab_username: GitLab username (fetched from glab CLI or env var)
         gitlab_default_group: Default GitLab group/namespace (optional)
         azure_openai_endpoint: Azure OpenAI endpoint URL
         azure_openai_deployment: Azure OpenAI deployment/model name
         azure_openai_api_version: Azure OpenAI API version
         azure_openai_api_key: Azure OpenAI API key (optional if using Azure CLI auth)
+        default_platform: Default platform for status command ('github' or 'gitlab', env: OSDU_AGENT_PLATFORM)
         client_type: Type of Azure client to use ('openai' or 'ai_agent')
         hosted_tools_enabled: Enable Microsoft Agent Framework hosted tools
         hosted_tools_mode: How to integrate hosted tools ('complement', 'replace', 'fallback')
@@ -147,6 +237,7 @@ class AgentConfig:
     )
 
     github_token: Optional[str] = field(default_factory=_get_github_token)
+    github_username: Optional[str] = field(default_factory=_get_github_username)
 
     # GitLab Configuration
     gitlab_url: Optional[str] = field(
@@ -154,6 +245,7 @@ class AgentConfig:
     )
 
     gitlab_token: Optional[str] = field(default_factory=_get_gitlab_token)
+    gitlab_username: Optional[str] = field(default_factory=_get_gitlab_username)
 
     gitlab_default_group: Optional[str] = field(
         default_factory=lambda: os.getenv("GITLAB_DEFAULT_GROUP")
@@ -207,6 +299,11 @@ class AgentConfig:
             os.getenv("OSDU_MCP_VERSION", "osdu-mcp-server"),
             # Note: stderr is redirected to logs/osdu_mcp_*.log by QuietMCPStdioTool
         ]
+    )
+
+    # Default Platform Configuration
+    default_platform: Literal["github", "gitlab"] = field(
+        default_factory=lambda: os.getenv("OSDU_AGENT_PLATFORM", "gitlab")  # type: ignore
     )
 
     # Hosted Tools Configuration

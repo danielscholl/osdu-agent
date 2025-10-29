@@ -23,7 +23,7 @@ Thank you for your interest in contributing to the OSDU Agent!
 2. Install dependencies:
    ```bash
    uv sync --frozen
-   uv pip install -e .[dev]
+   uv pip install -e '.[dev]'
    ```
 
 3. Verify installation:

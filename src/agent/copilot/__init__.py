@@ -186,7 +186,7 @@ Examples:
     # Fork command
     fork_parser = subparsers.add_parser(
         "fork",
-        help="Fork and initialize OSDU service repositories",
+        help="Clone OSDU service repositories",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -218,7 +218,7 @@ Available services:
     # Status command
     status_parser = subparsers.add_parser(
         "status",
-        help="Get GitHub or GitLab status for OSDU service repositories",
+        help="Retrieve status for OSDU service repositories",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
