@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.16](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.15...osdu-agent-v0.1.16) (2025-10-29)
+
+
+### Features
+
+* flow enhancements ([#44](https://github.com/danielscholl/osdu-agent/issues/44)) ([b3fc7f8](https://github.com/danielscholl/osdu-agent/commit/b3fc7f8b4a0d68669978817cf5128cd80cd608c8))
+
 ## [0.1.15](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.14...osdu-agent-v0.1.15) (2025-10-29)
 
 
