@@ -5,7 +5,7 @@ import os
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, cast
 
 from dotenv import load_dotenv
 
@@ -303,7 +303,14 @@ class AgentConfig:
 
     # Default Platform Configuration
     default_platform: Literal["github", "gitlab"] = field(
-        default_factory=lambda: os.getenv("OSDU_AGENT_PLATFORM", "gitlab")  # type: ignore
+        default_factory=lambda: cast(
+            Literal["github", "gitlab"],
+            (
+                os.getenv("OSDU_AGENT_PLATFORM", "gitlab")
+                if os.getenv("OSDU_AGENT_PLATFORM", "gitlab") in ("github", "gitlab")
+                else "gitlab"
+            ),
+        )
     )
 
     # Hosted Tools Configuration

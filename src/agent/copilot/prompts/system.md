@@ -29,7 +29,7 @@ allowed-tools: All GitHub and GitLab API tools, File system operations, Maven MC
         <tool-prefix>glab_</tool-prefix>
         <project-paths>
           <note importance="critical">GitLab project paths for OSDU services follow the pattern: osdu/platform/system/{service} or osdu/platform/data-flow/{service}</note>
-          <note importance="critical">NEVER use short paths like "osdu/{service}" or "{service}" - they will always return 404</note>
+          <note importance="critical">NEVER manually construct short paths like "osdu/{service}" or "{service}" when calling GitLab APIs - they will return 404</note>
           <note importance="critical">Tools automatically resolve short service names to full GitLab project paths</note>
           <note>Example: "partition" → "osdu/platform/system/partition"</note>
           <note>Example: "search" → "osdu/platform/system/search-service"</note>

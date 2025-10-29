@@ -354,8 +354,7 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
 
     if cmd == "status":
         # Parse --platform flag (default: from OSDU_AGENT_PLATFORM env var, defaults to gitlab)
-        config = AgentConfig()
-        platform = config.default_platform
+        platform = agent.config.default_platform
         if "--platform" in parts:
             platform_idx = parts.index("--platform")
             if platform_idx + 1 < len(parts):
@@ -393,15 +392,14 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
 
         # If no service specified, auto-detect
         if services_arg is None:
-            config = AgentConfig()
-            available_services = await detect_available_services(config)
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -454,15 +452,14 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
 
         # If no service specified, auto-detect
         if services_arg is None:
-            config = AgentConfig()
-            available_services = await detect_available_services(config)
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -522,15 +519,14 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
 
         # If no service specified, auto-detect
         if services_arg is None:
-            config = AgentConfig()
-            available_services = await detect_available_services(config)
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -671,15 +667,14 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
 
         # If no service specified, auto-detect
         if services_arg is None:
-            config = AgentConfig()
-            available_services = await detect_available_services(config)
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -725,17 +720,16 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
             mode_days_args = parts[1:]
 
         # Auto-detect available services if not specified
-        config = AgentConfig()
         available_services = None
         if services_arg is None:
-            available_services = await detect_available_services(config)
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -1618,9 +1612,10 @@ Examples:
         # Import copilot config to get default branch
         from agent.copilot.config import config as copilot_config
 
-        # Get default platform from config
-        agent_config = AgentConfig()
-        default_platform = agent_config.default_platform
+        # Get default platform from environment variable directly
+        import os
+
+        default_platform = os.getenv("OSDU_AGENT_PLATFORM", "gitlab")
 
         fork_parser = subparsers.add_parser(
             "fork",

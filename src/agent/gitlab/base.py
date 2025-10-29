@@ -49,7 +49,7 @@ class GitLabToolsBase:
         """
         Resolve a short service name to full GitLab project path.
 
-        Uses cached paths to avoid repeated GitHub API calls.
+        Uses cached paths to avoid repeated API calls when resolving GitLab project paths from GitHub repository variables.
         Automatically resolves short names like "partition" to full paths
         like "osdu/platform/system/partition" by fetching UPSTREAM_REPO_URL
         from GitHub repository variables.
