@@ -36,7 +36,7 @@ class IssueTools(GitLabToolsBase):
         Returns formatted string with issue list.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
 
             # Build query parameters
@@ -93,7 +93,7 @@ class IssueTools(GitLabToolsBase):
         Returns formatted string with issue details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             issue = gl_project.issues.get(issue_iid)
 
@@ -140,7 +140,7 @@ class IssueTools(GitLabToolsBase):
         Returns formatted string with issue notes.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             issue = gl_project.issues.get(issue_iid)
 
@@ -184,7 +184,7 @@ class IssueTools(GitLabToolsBase):
         Returns formatted string with created issue details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
 
             # Build issue data
@@ -243,7 +243,7 @@ class IssueTools(GitLabToolsBase):
         Returns formatted string with updated issue details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             issue = gl_project.issues.get(issue_iid)
 
@@ -305,7 +305,7 @@ class IssueTools(GitLabToolsBase):
         Returns formatted string confirming note addition.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             issue = gl_project.issues.get(issue_iid)
 
@@ -345,7 +345,7 @@ class IssueTools(GitLabToolsBase):
 
                 for project_name in project_list:
                     try:
-                        project_path = self.config.get_gitlab_project_path(project_name)
+                        project_path = self._resolve_project_path(project_name)
                         gl_project = self.gitlab.projects.get(project_path)
                         issues = gl_project.issues.list(search=query, per_page=limit)  # type: ignore[call-overload]
                         results.extend([(project_path, issue) for issue in issues])

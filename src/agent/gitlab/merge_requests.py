@@ -27,7 +27,7 @@ class MergeRequestTools(GitLabToolsBase):
         Returns formatted string with MR list.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
 
             # Build query parameters
@@ -85,7 +85,7 @@ class MergeRequestTools(GitLabToolsBase):
         Returns formatted string with MR details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             mr = gl_project.mergerequests.get(mr_iid)
 
@@ -142,7 +142,7 @@ class MergeRequestTools(GitLabToolsBase):
         Returns formatted string with MR notes.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             mr = gl_project.mergerequests.get(mr_iid)
 
@@ -184,7 +184,7 @@ class MergeRequestTools(GitLabToolsBase):
         Returns formatted string with created MR details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
 
             # Build MR data
@@ -230,7 +230,7 @@ class MergeRequestTools(GitLabToolsBase):
         Returns formatted string with updated MR details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             mr = gl_project.mergerequests.get(mr_iid)
 
@@ -297,7 +297,7 @@ class MergeRequestTools(GitLabToolsBase):
         Returns formatted string with merge result.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             mr = gl_project.mergerequests.get(mr_iid)
 
@@ -351,7 +351,7 @@ class MergeRequestTools(GitLabToolsBase):
         Returns formatted string confirming note addition.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             mr = gl_project.mergerequests.get(mr_iid)
 

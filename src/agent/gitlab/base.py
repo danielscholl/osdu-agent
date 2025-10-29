@@ -20,6 +20,10 @@ class GitLabToolsBase:
         """
         self.config = config
 
+        # Cache for resolved GitLab project paths
+        # Maps short service names to full paths (e.g., "partition" -> "osdu/platform/system/partition")
+        self._project_path_cache: Dict[str, str] = {}
+
         # All OSDU services use community.opengroup.org
         gitlab_url = "https://community.opengroup.org"
 
@@ -40,6 +44,37 @@ class GitLabToolsBase:
         else:
             # Create unauthenticated client for public projects
             self.gitlab = gitlab.Gitlab(url=gitlab_url)
+
+    def _resolve_project_path(self, project: str) -> str:
+        """
+        Resolve a short service name to full GitLab project path.
+
+        Uses cached paths to avoid repeated API calls when resolving GitLab project paths from GitHub repository variables.
+        Automatically resolves short names like "partition" to full paths
+        like "osdu/platform/system/partition" by fetching UPSTREAM_REPO_URL
+        from GitHub repository variables.
+
+        Args:
+            project: Short service name (e.g., "partition") or full path (e.g., "osdu/platform/system/partition")
+
+        Returns:
+            Full GitLab project path
+        """
+        # If already a full path, return as-is
+        if "/" in project:
+            return project
+
+        # Check cache first
+        if project in self._project_path_cache:
+            return self._project_path_cache[project]
+
+        # Resolve using config (fetches from GitHub API)
+        full_path = self.config.get_gitlab_project_path(project)
+
+        # Cache the result
+        self._project_path_cache[project] = full_path
+
+        return full_path
 
     def _format_issue(self, issue: Any) -> Dict[str, Any]:
         """Format GitLab issue object to dict."""

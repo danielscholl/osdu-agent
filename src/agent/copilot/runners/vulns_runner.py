@@ -24,6 +24,9 @@ if TYPE_CHECKING:
 class VulnsRunner(BaseRunner):
     """Runs vulnerability analysis using Maven MCP server with live output"""
 
+    # All available cloud providers for OSDU services
+    ALL_PROVIDERS = ["azure", "aws", "gc", "ibm"]
+
     def __init__(
         self,
         prompt_file: Union[Path, Traversable],
@@ -43,7 +46,7 @@ class VulnsRunner(BaseRunner):
             agent: Agent instance with MCP tools
             create_issue: Whether to create tracking issues for findings
             severity_filter: List of severity levels to include (None = all)
-            providers: Provider modules to include (default: ["azure"])
+            providers: Provider modules to include (default: ["azure"], "all" expands to all providers)
             include_testing: Whether to include testing modules (default: False)
             repos_root: Root directory for repositories (optional)
         """
@@ -51,7 +54,13 @@ class VulnsRunner(BaseRunner):
         self.agent = agent
         self.create_issue = create_issue
         self.severity_filter = severity_filter  # None = all severities
-        self.providers = providers or ["azure"]  # Default to azure
+
+        # Handle "all" provider keyword
+        if providers and "all" in [p.lower() for p in providers]:
+            self.providers = self.ALL_PROVIDERS.copy()
+        else:
+            self.providers = providers or ["azure"]  # Default to azure
+
         self.include_testing = include_testing
         self.tracker: VulnsTracker = VulnsTracker(services)  # Override type from BaseRunner
 

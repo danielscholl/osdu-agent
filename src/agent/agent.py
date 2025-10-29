@@ -178,6 +178,12 @@ class Agent:
             )
             system_prompt = system_prompt.replace("{{REPOS_ROOT}}", str(self.config.repos_root))
 
+            # Replace user identity placeholders (if available)
+            github_user = self.config.github_username or "unknown"
+            gitlab_user = self.config.gitlab_username or "unknown"
+            system_prompt = system_prompt.replace("{{GITHUB_USERNAME}}", github_user)
+            system_prompt = system_prompt.replace("{{GITLAB_USERNAME}}", gitlab_user)
+
             return system_prompt
         except Exception:
             # Fallback to basic instructions if file not found

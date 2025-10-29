@@ -665,12 +665,13 @@ def send_pr_to_gitlab(service: str, pr_number: int, config: AgentConfig) -> str:
 
     This function orchestrates the complete workflow:
     1. Extract PR data from GitHub
-    2. Auto-configure upstream remote (temporary)
-    3. Create MR branch from upstream
-    4. Cherry-pick PR commits
-    5. Push branch to GitLab
-    6. Create GitLab MR
-    7. Clean up local branch and upstream remote
+    2. Validate PR is approved (at least one approval, no change requests)
+    3. Auto-configure upstream remote (temporary)
+    4. Create MR branch from upstream
+    5. Cherry-pick PR commits
+    6. Push branch to GitLab
+    7. Create GitLab MR
+    8. Clean up local branch and upstream remote
 
     Args:
         service: Service name
@@ -691,6 +692,21 @@ def send_pr_to_gitlab(service: str, pr_number: int, config: AgentConfig) -> str:
         github_url = pr_data.get(
             "html_url", f"https://github.com/{config.get_repo_full_name(service)}/pull/{pr_number}"
         )
+
+        # Validate PR is approved before proceeding
+        pr_tools = PullRequestTools(config)
+        is_approved, approval_msg = pr_tools.is_pull_request_approved(service, pr_number)
+
+        if not is_approved:
+            logger.warning(f"PR #{pr_number} approval check failed: {approval_msg}")
+            return (
+                f"Error: Cannot send PR to GitLab - PR must be approved first.\n"
+                f"{approval_msg}\n\n"
+                f"GitHub PR: {github_url}\n\n"
+                f"Please ensure the PR has at least one approval and no outstanding change requests."
+            )
+
+        logger.info(f"PR #{pr_number} approval check passed: {approval_msg}")
 
         # Ensure upstream is configured (auto-adds if not present)
         success, msg = ensure_upstream_configured(service, config)

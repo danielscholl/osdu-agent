@@ -29,7 +29,7 @@ class PipelineTools(GitLabToolsBase):
         Returns formatted string with pipeline list.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
 
             # Build query parameters
@@ -82,7 +82,7 @@ class PipelineTools(GitLabToolsBase):
         Returns formatted string with pipeline details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             pipeline = gl_project.pipelines.get(pipeline_id)
 
@@ -130,7 +130,7 @@ class PipelineTools(GitLabToolsBase):
         Returns formatted string with job details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             pipeline = gl_project.pipelines.get(pipeline_id)
 
@@ -179,7 +179,7 @@ class PipelineTools(GitLabToolsBase):
         Returns formatted string with triggered pipeline details.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
 
             # Build pipeline data
@@ -224,7 +224,7 @@ class PipelineTools(GitLabToolsBase):
         Returns formatted string with cancellation result.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             pipeline = gl_project.pipelines.get(pipeline_id)
 
@@ -266,7 +266,7 @@ class PipelineTools(GitLabToolsBase):
         Returns formatted string with retry result.
         """
         try:
-            project_path = self.config.get_gitlab_project_path(project)
+            project_path = self._resolve_project_path(project)
             gl_project = self.gitlab.projects.get(project_path)
             pipeline = gl_project.pipelines.get(pipeline_id)
 

@@ -123,6 +123,20 @@ def _render_full_startup_banner(
     console.print()
 
     # Connection status (only show active connections)
+    # GitLab - show green if connected, red if token exists but invalid
+    if config.gitlab_token:
+        # All OSDU services use community.opengroup.org (hardcoded in GitLab tools)
+        gitlab_url = "https://community.opengroup.org"
+        from urllib.parse import urlparse
+
+        domain = urlparse(gitlab_url).netloc
+
+        status_dot = "[green]●[/green]" if gitlab_connected else "[red]●[/red]"
+        status_text = "Connected" if gitlab_connected else "Not connected"
+        console.print(
+            f" {status_dot} {status_text} to GitLab ([cyan]{domain}[/cyan])", highlight=False
+        )
+
     # GitHub - show green if connected, red if not
     status_dot = "[green]●[/green]" if github_connected else "[red]●[/red]"
     status_text = "Connected" if github_connected else "Not connected"
@@ -146,20 +160,6 @@ def _render_full_startup_banner(
         console.print(
             f" {status_dot} {status_text} to OSDU MCP Server ([cyan]v1.0.0[/cyan])",
             highlight=False,
-        )
-
-    # GitLab - show green if connected, red if token exists but invalid
-    if config.gitlab_token:
-        # All OSDU services use community.opengroup.org (hardcoded in GitLab tools)
-        gitlab_url = "https://community.opengroup.org"
-        from urllib.parse import urlparse
-
-        domain = urlparse(gitlab_url).netloc
-
-        status_dot = "[green]●[/green]" if gitlab_connected else "[red]●[/red]"
-        status_text = "Connected" if gitlab_connected else "Not connected"
-        console.print(
-            f" {status_dot} {status_text} to GitLab ([cyan]{domain}[/cyan])", highlight=False
         )
 
     console.print()
@@ -353,14 +353,15 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         return None
 
     if cmd == "status":
-        # Parse --platform flag (default: github)
-        platform = "github"
+        # Parse --platform flag (default: from OSDU_AGENT_PLATFORM env var, defaults to gitlab)
+        platform = agent.config.default_platform
         if "--platform" in parts:
             platform_idx = parts.index("--platform")
             if platform_idx + 1 < len(parts):
-                platform = parts[platform_idx + 1].lower()
-                if platform not in ["github", "gitlab"]:
-                    return f"Error: Invalid platform '{platform}'. Use 'github' or 'gitlab'"
+                platform_input = parts[platform_idx + 1].lower()
+                if platform_input not in ["github", "gitlab"]:
+                    return f"Error: Invalid platform '{platform_input}'. Use 'github' or 'gitlab'"
+                platform = platform_input  # type: ignore[assignment]
 
         # Parse --provider flag (for GitLab)
         providers = None
@@ -376,24 +377,29 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         # Parse --actions flag
         show_actions = "--actions" in parts
 
-        # Auto-detect services if not specified
+        # Parse service argument - support both positional and --service flag
         services_arg = None
         available_services = None
 
-        # Check if service is specified (not a flag)
-        if len(parts) >= 2 and not parts[1].startswith("--"):
+        # Check for --service flag first
+        if "--service" in parts:
+            service_idx = parts.index("--service")
+            if service_idx + 1 < len(parts):
+                services_arg = parts[service_idx + 1]
+        # Otherwise check for positional argument (not a flag)
+        elif len(parts) >= 2 and not parts[1].startswith("--"):
             services_arg = parts[1]
-        else:
-            # Auto-detect available services
-            config = AgentConfig()
-            available_services = await detect_available_services(config)
+
+        # If no service specified, auto-detect
+        if services_arg is None:
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -431,24 +437,29 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         if not COPILOT_AVAILABLE or copilot_module is None:
             return "Error: Copilot module not available for service validation"
 
-        # Auto-detect services if not specified
+        # Parse service argument - support both positional and --service flag
         services_arg = None
         available_services = None
 
-        # Check if service is specified (not a flag)
-        if len(parts) >= 2 and not parts[1].startswith("--"):
+        # Check for --service flag first
+        if "--service" in parts:
+            service_idx = parts.index("--service")
+            if service_idx + 1 < len(parts):
+                services_arg = parts[service_idx + 1]
+        # Otherwise check for positional argument (not a flag)
+        elif len(parts) >= 2 and not parts[1].startswith("--"):
             services_arg = parts[1]
-        else:
-            # Auto-detect available services
-            config = AgentConfig()
-            available_services = await detect_available_services(config)
+
+        # If no service specified, auto-detect
+        if services_arg is None:
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -476,10 +487,10 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
                 severity_arg = parts[severity_idx + 1]
                 severity_filter = [s.strip().lower() for s in severity_arg.split(",")]
 
-        # Parse --providers flag (default: azure; core is always included)
+        # Parse --provider flag (default: azure; core is always included)
         vulns_providers: List[str] = ["azure"]
-        if "--providers" in parts:
-            providers_idx = parts.index("--providers")
+        if "--provider" in parts:
+            providers_idx = parts.index("--provider")
             if providers_idx + 1 < len(parts):
                 providers_arg = parts[providers_idx + 1]
                 vulns_providers = [p.strip().lower() for p in providers_arg.split(",")]
@@ -493,24 +504,29 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         except FileNotFoundError as exc:  # pragma: no cover - packaging guard
             return f"Error: {exc}"
 
-        # Auto-detect services if not specified
+        # Parse service argument - support both positional and --service flag
         services_arg = None
         available_services = None
 
-        # Check if service is specified (not a flag)
-        if len(parts) >= 2 and not parts[1].startswith("--"):
+        # Check for --service flag first
+        if "--service" in parts:
+            service_idx = parts.index("--service")
+            if service_idx + 1 < len(parts):
+                services_arg = parts[service_idx + 1]
+        # Otherwise check for positional argument (not a flag)
+        elif len(parts) >= 2 and not parts[1].startswith("--"):
             services_arg = parts[1]
-        else:
-            # Auto-detect available services
-            config = AgentConfig()
-            available_services = await detect_available_services(config)
+
+        # If no service specified, auto-detect
+        if services_arg is None:
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -619,10 +635,10 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         return None
 
     if cmd == "depends":
-        # Parse --providers flag (default: core,azure)
+        # Parse --provider flag (default: core,azure)
         depends_providers: List[str] = ["core", "azure"]
-        if "--providers" in parts:
-            providers_idx = parts.index("--providers")
+        if "--provider" in parts:
+            providers_idx = parts.index("--provider")
             if providers_idx + 1 < len(parts):
                 providers_arg = parts[providers_idx + 1]
                 depends_providers = [p.strip() for p in providers_arg.split(",")]
@@ -636,24 +652,29 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
         if not COPILOT_AVAILABLE or copilot_module is None:
             return "Error: Copilot module not available for service validation"
 
-        # Auto-detect services if not specified
+        # Parse service argument - support both positional and --service flag
         services_arg = None
         available_services = None
 
-        # Check if service is specified (not a flag)
-        if len(parts) >= 2 and not parts[1].startswith("--"):
+        # Check for --service flag first
+        if "--service" in parts:
+            service_idx = parts.index("--service")
+            if service_idx + 1 < len(parts):
+                services_arg = parts[service_idx + 1]
+        # Otherwise check for positional argument (not a flag)
+        elif len(parts) >= 2 and not parts[1].startswith("--"):
             services_arg = parts[1]
-        else:
-            # Auto-detect available services
-            config = AgentConfig()
-            available_services = await detect_available_services(config)
+
+        # If no service specified, auto-detect
+        if services_arg is None:
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -699,17 +720,16 @@ async def handle_slash_command(command: str, agent: Agent, thread: Any) -> Optio
             mode_days_args = parts[1:]
 
         # Auto-detect available services if not specified
-        config = AgentConfig()
         available_services = None
         if services_arg is None:
-            available_services = await detect_available_services(config)
+            available_services = await detect_available_services(agent.config)
 
             if not available_services:
-                return f"Error: No available services found in {config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
+                return f"Error: No available services found in {agent.config.repos_root}/\nRun 'osdu fork --service all' to clone repositories"
 
             # Display auto-detection message
             console.print(
-                f"[cyan]{format_auto_detection_message(available_services, config)}[/cyan]"
+                f"[cyan]{format_auto_detection_message(available_services, agent.config)}[/cyan]"
             )
             console.print()
 
@@ -757,17 +777,18 @@ def _render_help() -> None:
 - `/fork <service>` - Fork service repository
 - `/fork <service>,<service>` - Fork multiple repositories
 - `/fork <service> --branch develop` - Fork with custom branch
-- `/status <service>` - Check GitHub status for service (default)
+- `/status <service>` - Check status for service (default: GitLab)
 - `/status <service>,<service>` - Check status for multiple repos
-- `/status <service> --platform gitlab` - Check GitLab status (providers: Azure,Core)
-- `/status <service> --platform gitlab --provider azure` - GitLab status (azure only)
+- `/status <service> --platform github` - Check GitHub status
+- `/status <service> --provider azure` - GitLab status (azure provider only)
 - `/test <service>` - Run Maven tests (default: core,azure profiles)
 - `/test <service> --provider aws` - Run tests with specific provider
-- `/vulns <service>` - Run dependency/vulnerability analysis
+- `/vulns <service>` - Run dependency/vulnerability analysis (default: azure provider)
+- `/vulns <service> --provider all` - Scan all providers (azure, aws, gc, ibm)
 - `/vulns <service> --create-issue` - Scan and create issues for vulnerabilities
 - `/vulns <service> --severity critical,high` - Filter by severity
-- `/depends <service>` - Analyze dependency updates (default: azure provider)
-- `/depends <service> --providers azure,core` - Check updates for specific providers
+- `/depends <service>` - Analyze dependency updates (default: core,azure provider)
+- `/depends <service> --provider azure,core` - Check updates for specific providers
 - `/depends <service> --create-issue` - Create issues for available updates
 - `/report` - Period comparison for all services (last 30 days)
 - `/report partition` - Report for specific service
@@ -1561,27 +1582,27 @@ def build_parser() -> argparse.ArgumentParser:
 Commands:
   (none)              Interactive chat mode (default)
   -p PROMPT           Single query mode
-  fork                Fork and initialize repositories (requires copilot)
-  status              Check GitHub/GitLab status (requires copilot)
-  test                Run Maven tests for services (requires copilot)
-  vulns               Run dependency/vulnerability analysis (requires copilot)
-  depends             Analyze dependency updates (requires copilot)
-  report              Generate GitLab contribution reports (requires copilot)
-  send                Send GitHub PRs/Issues to GitLab (requires copilot)
+  fork                Clone and initialize repositories
+  status              Check GitHub/GitLab status
+  test                Run Maven tests for services
+  vulns               Run dependency/vulnerability analysis
+  depends             Analyze dependency updates
+  report              Generate GitLab contribution reports
+  send                Send GitHub PRs/Issues to GitLab
 
 Examples:
   osdu                                    # Interactive chat
   osdu -p "List issues in partition"      # One-shot query
-  osdu fork --service partition          # Fork repos
-  osdu status --service partition        # Check GitHub status (default)
-  osdu status --service partition --platform gitlab  # Check GitLab status
-  osdu test --service partition          # Run Maven tests
-  osdu vulns --service partition         # Run vulnerability analysis
-  osdu depends --service partition       # Analyze dependency updates
-  osdu report --service partition        # Report for specific service
+  osdu fork --service partition           # Clone repos
+  osdu status --service partition         # Check GitLab status (default)
+  osdu status --service partition --platform github  # Check GitHub status
+  osdu test --service partition           # Run Maven tests
+  osdu vulns --service partition          # Run vulnerability analysis
+  osdu depends --service partition        # Analyze dependency updates
+  osdu report --service partition         # Report for specific service
   osdu report --service partition --mode adr --days 60  # ADR report (60 days)
-  osdu report --mode trends              # Trend analysis (all services)
-  osdu send --service partition --pr 5   # Send PR to GitLab
+  osdu report --mode trends               # Trend analysis (all services)
+  osdu send --service partition --pr 5    # Send PR to GitLab
         """,
     )
 
@@ -1591,9 +1612,14 @@ Examples:
         # Import copilot config to get default branch
         from agent.copilot.config import config as copilot_config
 
+        # Get default platform from environment variable directly
+        import os
+
+        default_platform = os.getenv("OSDU_AGENT_PLATFORM", "gitlab")
+
         fork_parser = subparsers.add_parser(
             "fork",
-            help="Fork and initialize OSDU service repositories",
+            help="Clone OSDU service repositories",
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
         fork_parser.add_argument(
@@ -1611,7 +1637,7 @@ Examples:
 
         status_parser = subparsers.add_parser(
             "status",
-            help="Get GitHub or GitLab status for OSDU service repositories",
+            help="Retrieve status for OSDU service repositories",
             formatter_class=argparse.RawDescriptionHelpFormatter,
         )
         status_parser.add_argument(
@@ -1623,8 +1649,8 @@ Examples:
         status_parser.add_argument(
             "--platform",
             choices=["github", "gitlab"],
-            default="github",
-            help="Platform to query (default: github)",
+            default=default_platform,
+            help=f"Platform to query (default: {default_platform})",
         )
         status_parser.add_argument(
             "--provider",
@@ -1676,9 +1702,9 @@ Examples:
             help="Severity filter: critical, high, medium, low (default: all severities)",
         )
         vulns_parser.add_argument(
-            "--providers",
+            "--provider",
             default="azure",
-            help="Provider(s) to include: azure, aws, gc, ibm, core, or comma-separated list (default: azure)",
+            help="Provider(s) to include: azure, aws, gc, ibm, all, or comma-separated list (default: azure; use 'all' for all providers)",
         )
         vulns_parser.add_argument(
             "--include-testing",
@@ -1720,7 +1746,7 @@ Examples:
             help="Service name(s): 'all', single name, or comma-separated list (default: auto-detect available services)",
         )
         depends_parser.add_argument(
-            "--providers",
+            "--provider",
             default="core,azure",
             help="Provider(s) to include: core, azure, aws, gcp, or comma-separated list (default: core,azure)",
         )
@@ -1965,7 +1991,7 @@ async def async_main(args: Optional[list[str]] = None) -> int:
             severity_filter = [s.strip().lower() for s in parsed.severity.split(",")]
 
         # Parse providers filter (default: azure + core modules always included)
-        providers = [p.strip().lower() for p in parsed.providers.split(",")]
+        providers = [p.strip().lower() for p in parsed.provider.split(",")]
 
         # Include testing if flag set
         include_testing = parsed.include_testing
@@ -2184,7 +2210,7 @@ async def async_main(args: Optional[list[str]] = None) -> int:
             return 1
 
         # Parse providers filter (default: azure + core modules always included)
-        providers = [p.strip().lower() for p in parsed.providers.split(",")]
+        providers = [p.strip().lower() for p in parsed.provider.split(",")]
 
         # Include testing if flag set
         include_testing = parsed.include_testing
