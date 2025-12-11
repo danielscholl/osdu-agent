@@ -55,7 +55,7 @@ Supports issues, PRs, workflows, code scanning. Includes dependency analysis and
 uv tool install --prerelease=allow git+https://github.com/danielscholl/osdu-agent.git
 
 # Upgrade
-uv tool upgrade osdu-agent
+uv tool upgrade osdu
 
 # 2. Configure required credentials
 cp .env.example .env
