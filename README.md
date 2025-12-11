@@ -52,7 +52,7 @@ Supports issues, PRs, workflows, code scanning. Includes dependency analysis and
 
 ```bash
 # 1. Install
-uv tool install --prerelease=allow git+https://github.com/danielscholl/osdu-agent.git
+uv tool install --prerelease=allow git+https://github.com/danielscholl/osdu.git
 
 # Upgrade
 uv tool upgrade osdu
