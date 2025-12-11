@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.19](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.18...osdu-agent-v0.1.19) (2025-12-11)
+
+
+### Miscellaneous
+
+* **deps:** bump actions/checkout from 5 to 6 ([#56](https://github.com/danielscholl/osdu-agent/issues/56)) ([0f80471](https://github.com/danielscholl/osdu-agent/commit/0f80471a490c4e50cae6b06c061d69a7311bb855))
+* **deps:** bump the python-dev group across 1 directory with 3 updates ([#52](https://github.com/danielscholl/osdu-agent/issues/52)) ([5844a9c](https://github.com/danielscholl/osdu-agent/commit/5844a9ce22816634c23d2821d3647b3551a62249))
+* **deps:** bump the python-dev group across 1 directory with 5 updates ([#58](https://github.com/danielscholl/osdu-agent/issues/58)) ([e486a2d](https://github.com/danielscholl/osdu-agent/commit/e486a2d4e33384c17b127a1d150d3a17febf3b5f))
+* **deps:** bump the python-prod group across 1 directory with 4 updates ([#53](https://github.com/danielscholl/osdu-agent/issues/53)) ([b6c85e9](https://github.com/danielscholl/osdu-agent/commit/b6c85e98597ae5bc4ca4fb65ff35c0f85741c172))
+* rename package from osdu-agent to osdu ([#59](https://github.com/danielscholl/osdu-agent/issues/59)) ([df048af](https://github.com/danielscholl/osdu-agent/commit/df048afb78da0e6938d862b236ab6770ea55797a))
+
 ## [0.1.18](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.17...osdu-agent-v0.1.18) (2025-10-29)
 
 
