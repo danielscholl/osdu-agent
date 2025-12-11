@@ -1146,7 +1146,7 @@ async def run_chat_mode(quiet: bool = False, verbose: bool = False) -> int:
             set_session_context(session_id=session_id, thread_id=thread.id)
 
         # Use prompt_toolkit for better terminal handling (backspace, arrows, history)
-        session = None
+        session: Any = None
         prompt_tokens = None
         patch_stdout = None
         try:
