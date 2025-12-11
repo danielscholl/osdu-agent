@@ -52,10 +52,10 @@ Supports issues, PRs, workflows, code scanning. Includes dependency analysis and
 
 ```bash
 # 1. Install
-uv tool install --prerelease=allow git+https://github.com/danielscholl/osdu-agent.git
+uv tool install --prerelease=allow git+https://github.com/danielscholl/osdu.git
 
 # Upgrade
-uv tool upgrade osdu-agent
+uv tool upgrade osdu
 
 # 2. Configure required credentials
 cp .env.example .env

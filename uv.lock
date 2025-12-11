@@ -1981,7 +1981,7 @@ wheels = [
 ]
 
 [[package]]
-name = "osdu-agent"
+name = "osdu"
 version = "0.1.18"
 source = { editable = "." }
 dependencies = [
