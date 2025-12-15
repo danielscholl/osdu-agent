@@ -1,5 +1,6 @@
 """Test MCP array parameter handling."""
 
+from typing import get_origin
 from unittest.mock import AsyncMock
 
 import pytest
@@ -35,12 +36,14 @@ async def test_mcp_array_parameter_type_mapping():
     fields = input_model.model_fields
     assert "items" in fields
 
-    # The field should be of type list
+    # The field should be of type list (or list[str] generic alias)
     field_info = fields["items"]
-    assert field_info.annotation is list
+    annotation = field_info.annotation
+    # Handle both plain `list` and generic `list[str]` (from newer agent-framework versions)
+    assert annotation is list or get_origin(annotation) is list
 
     print("✓ Array parameter correctly mapped to Python list type")
-    print(f"  Field annotation: {field_info.annotation}")
+    print(f"  Field annotation: {annotation}")
 
 
 @pytest.mark.asyncio
