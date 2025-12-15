@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.20](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.19...osdu-agent-v0.1.20) (2025-12-15)
+
+
+### Miscellaneous
+
+* **deps:** bump actions/upload-artifact from 5 to 6 ([#60](https://github.com/danielscholl/osdu-agent/issues/60)) ([ff9cdb8](https://github.com/danielscholl/osdu-agent/commit/ff9cdb8351ffaf176f9c27e80978fbee46474a85))
+* **deps:** bump ruff from 0.14.8 to 0.14.9 in the python-dev group ([#61](https://github.com/danielscholl/osdu-agent/issues/61)) ([ae65606](https://github.com/danielscholl/osdu-agent/commit/ae65606896ade13686b8996da4cd5a67d6d70364))
+* **deps:** bump the python-prod group with 2 updates ([#62](https://github.com/danielscholl/osdu-agent/issues/62)) ([f376a01](https://github.com/danielscholl/osdu-agent/commit/f376a018dd2516e18e1f88ed700443c53eb35549))
+* **pyproject:** rename osdu script to osdu-agent-poc ([#63](https://github.com/danielscholl/osdu-agent/issues/63)) ([58a0ded](https://github.com/danielscholl/osdu-agent/commit/58a0ded6db7f92e54c5354865152e7267a2a11a8))
+
 ## [0.1.19](https://github.com/danielscholl/osdu-agent/compare/osdu-agent-v0.1.18...osdu-agent-v0.1.19) (2025-12-11)
 
 
