@@ -46,7 +46,7 @@ dev = [
 ]
 
 [project.scripts]
-osdu = "agent.cli:main"
+osdu-agent-poc = "agent.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
